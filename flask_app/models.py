@@ -20,14 +20,22 @@ class ActivityLog(db.Model):
     details = db.Column(db.String(255), nullable=True) # e.g., filename, metadata
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Association Table for Many-to-Many (Session <-> Document)
+session_documents = db.Table('session_documents',
+    db.Column('session_id', db.Integer, db.ForeignKey('chat_session.id'), primary_key=True),
+    db.Column('document_id', db.Integer, db.ForeignKey('document.id'), primary_key=True)
+)
+
 class ChatSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(200), default="New Conversation")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship
-    messages = db.relationship('ChatMessage', backref='session', lazy=True)
+    # Relationships
+    messages = db.relationship('ChatMessage', backref='session', lazy=True, cascade="all, delete-orphan")
+    documents = db.relationship('Document', secondary=session_documents, lazy='subquery',
+        backref=db.backref('sessions', lazy=True))
 
 class ChatMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)

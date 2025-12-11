@@ -150,6 +150,11 @@ Role & Behavior:
 3. **Structured**: When asked about "Research Gap" or "Framework", provide a structured list.
 4. **Language**: Use formal Indonesian (Bahasa Baku) mixed with standard English academic terms (e.g., "State of the Art", "Novelty").
 
+MANDATORY CITATION FORMAT:
+At the end of your Final Answer, you MUST include a list of used references in this exact format:
+**REFERENSI:**
+- [Nama File, Halaman X]: Kutipan singkat...
+
 Tools available:
 {tools}
 
@@ -265,13 +270,15 @@ def dashboard():
     
     # Recent documents
     recent_docs = Document.query.filter_by(user_id=current_user.id).order_by(Document.uploaded_at.desc()).limit(5).all()
+    all_docs = Document.query.filter_by(user_id=current_user.id).order_by(Document.uploaded_at.desc()).all()
+    recent_sessions = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).limit(5).all()
     
     stats = {
         'docs_count': docs_count,
         'chats_count': chats_count
     }
     
-    return render_template('dashboard.html', user=current_user, stats=stats, recent_docs=recent_docs)
+    return render_template('dashboard.html', user=current_user, stats=stats, recent_docs=recent_docs, all_docs=all_docs, recent_sessions=recent_sessions)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -352,34 +359,71 @@ def upload_file():
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+@app.route('/create_session', methods=['POST'])
+@login_required
+def create_session():
+    data = request.json
+    title = data.get('title', 'New Research')
+    doc_ids = data.get('doc_ids', [])
+    
+    # Create Session
+    new_session = ChatSession(user_id=current_user.id, title=title)
+    
+    # Associate Documents
+    if doc_ids:
+        docs = Document.query.filter(Document.id.in_(doc_ids), Document.user_id == current_user.id).all()
+        new_session.documents.extend(docs)
+    
+    db.session.add(new_session)
+    db.session.commit()
+    
+    return jsonify({'session_id': new_session.id, 'message': 'Project created successfully'})
+
+@app.route('/session/<int:session_id>', methods=['GET'])
+@login_required
+def get_session_details(session_id):
+    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    
+    return jsonify({
+        'id': session.id,
+        'title': session.title,
+        'doc_count': len(session.documents),
+        'doc_names': [d.filename for d in session.documents]
+    })
+
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
     try:
         data = request.json
         user_input = data.get('message')
+        session_id = data.get('session_id')
         
         if not user_input:
             return jsonify({'error': 'Empty message'}), 400
 
-        # 1. Get or Create Session
-        session_title = "General Chat"
-        chat_session = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).first()
-        if not chat_session:
-            chat_session = ChatSession(user_id=current_user.id, title=session_title)
+        # 1. Get Session
+        if session_id:
+            chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first()
+        else:
+            # Fallback or Create New (Legacy support)
+            chat_session = ChatSession(user_id=current_user.id, title="General Chat")
             db.session.add(chat_session)
             db.session.commit()
         
-        # 2. Get History (Last 5 turns)
+        if not chat_session:
+             return jsonify({'error': 'Session not found'}), 404
+
+        # 2. Get History
         recent_msgs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-10:]
-        
         history_str = ""
         for msg in recent_msgs:
             role_marker = "User" if msg.role == 'user' else "AI"
             history_str += f"{role_marker}: {msg.content}\n"
                 
-        # 3. Invoke Agent
-        # This might fail if Env Vars are missing, so it's now inside the try block
+        # 3. Invoke Agent (Pass allowed_docs if possible)
+        # Note: For now we pass user_id. In a real specialized RAG, 
+        # we would pass the specific filenames to the retriever filter.
         executor = get_agent_executor(current_user.id)
         
         try:
@@ -388,9 +432,13 @@ def chat():
                 "chat_history": history_str
             })
             answer = response["output"]
+            
+            # Post-process for "Smart Citation"
+            # (In a real app, strict JSON parsing or Regex would extract citations)
+            
         except Exception as e:
             print(f"Agent Execution Error: {e}")
-            answer = f"I encountered an error trying to search: {str(e)}"
+            answer = f"Maaf, ada kendala teknis: {str(e)}"
 
         # 4. Save to DB
         user_msg_db = ChatMessage(session_id=chat_session.id, role='user', content=user_input)
@@ -404,23 +452,51 @@ def chat():
         
         return jsonify({
             'answer': answer,
-            'context': []
+            'context': [] 
         })
     except Exception as ie:
         import traceback
         trace = traceback.format_exc()
         print(f"CRITICAL CHAT ERROR: {trace}")
         return jsonify({
-            'answer': f"System Error: {str(ie)}. Please check Vercel Logs or Environment Variables.",
+            'answer': f"System Error: {str(ie)}",
             'context': []
         })
+
+@app.route('/download_chat/<int:session_id>')
+@login_required
+def download_chat_export(session_id):
+    chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    msgs = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.created_at.asc()).all()
+    
+    # Generate Markdown/Text
+    content = f"# Transkrip Bimbingan: {chat_session.title}\n"
+    content += f"Tanggal: {datetime.now().strftime('%d %B %Y')}\n\n"
+    
+    for m in msgs:
+        role = "Mahasiswa" if m.role == 'user' else "Dr. Sync (AI)"
+        content += f"**{role}**:\n{m.content}\n\n---\n\n"
+        
+    from flask import Response
+    return Response(
+        content,
+        mimetype="text/markdown",
+        headers={"Content-disposition": f"attachment; filename=Draft_Skripsi_{session_id}.md"}
+    )
 
 @app.route('/history', methods=['GET'])
 @login_required
 def get_history():
-    chat_session = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).first()
+    # Helper to get specific session history
+    session_id = request.args.get('session_id')
+    if session_id:
+        chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first()
+    else:
+        chat_session = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).first()
+        
     if not chat_session:
         return jsonify([])
+        
     msgs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()
     
     output = []
@@ -434,4 +510,7 @@ def get_history():
     return jsonify(output)
 
 if __name__ == '__main__':
+    with app.app_context():
+        # Ensure migration for new table
+        db.create_all()
     app.run(debug=True, port=8501)

@@ -4,19 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - ScholarSync</title>
+    <title>SkripsiSync - Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Markdown Parser -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Code Highlight -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- MathJax for Latex formulas -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
 
     <style>
         body {
@@ -24,99 +18,33 @@
             background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f5f3ff 100%);
         }
 
-        /* Glassmorphism Utilities */
+        /* Glassmorphism */
         .glass {
             background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .glass-sidebar {
-            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        .chat-container {
-            height: calc(100vh - 140px);
-            /* Adjusted for header padding */
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Thin Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Markdown Styles within Chat */
+        /* Markdown Styles */
         .prose p {
-            margin-bottom: 0.75em;
-            line-height: 1.6;
-        }
-
-        .prose ul,
-        .prose ol {
-            margin-left: 1.25em;
             margin-bottom: 0.75em;
         }
 
         .prose ul {
             list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 0.75em;
         }
 
         .prose ol {
             list-style-type: decimal;
-        }
-
-        .prose strong {
-            color: #1e293b;
-            font-weight: 600;
-        }
-
-        .prose pre {
-            background: #1e293b;
-            padding: 1em;
-            border-radius: 0.5em;
-            overflow-x: auto;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-
-        .prose code {
-            background: #f1f5f9;
-            padding: 0.2em 0.4em;
-            border-radius: 0.25em;
-            font-size: 0.875em;
-            color: #ef4444;
-            font-family: monospace;
-        }
-
-        .prose pre code {
-            background: transparent;
-            color: inherit;
-            padding: 0;
+            padding-left: 1.5em;
+            margin-bottom: 0.75em;
         }
 
         .prose blockquote {
-            border-left: 4px solid #6366f1;
+            border-left: 3px solid #6366f1;
             padding-left: 1em;
             color: #475569;
             font-style: italic;
@@ -142,66 +70,62 @@
     <!-- Header (Glass) -->
     <header class="glass sticky top-0 z-30 w-full px-6 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-4">
-            <!-- Mobile Menu Button -->
             <button onclick="toggleSidebar()" class="md:hidden text-slate-500 hover:text-indigo-600 focus:outline-none">
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
-            <h1
-                class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center gap-2">
-                <i class="fa-solid fa-graduation-cap text-indigo-600"></i> ScholarSync
-            </h1>
+            <a href="/dashboard" class="flex items-center gap-2 hover:opacity-80 transition">
+                <div
+                    class="h-8 w-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-graduation-cap text-sm"></i>
+                </div>
+                <span
+                    class="font-bold text-lg hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">SkripsiSync</span>
+            </a>
         </div>
 
-        <div class="flex items-center gap-3 text-sm">
-            <div
-                class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50/50 border border-indigo-100 text-indigo-700">
-                <i class="fa-solid fa-server text-xs"></i>
-                <span id="stats-display" class="font-medium text-xs">Docs: 0 | Chunks: 0</span>
+        <div class="flex items-center gap-3">
+            <div class="hidden md:flex flex-col text-right mr-2">
+                <span id="header-session-title"
+                    class="text-sm font-bold text-slate-700 truncate max-w-[150px]">...</span>
+                <span class="text-[10px] text-slate-400">Current Session</span>
             </div>
-            <a href="/" class="text-slate-500 hover:text-indigo-600 transition font-medium">Exit</a>
+            <button onclick="exportChat()"
+                class="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition flex items-center gap-2 font-semibold shadow-sm">
+                <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden sm:inline">Export Draft</span>
+            </button>
             <div
-                class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
-                {{ user.username[0].upper() }}
+                class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 border border-white shadow-sm">
+                <i class="fa-solid fa-user text-xs"></i>
             </div>
         </div>
     </header>
 
-    <div class="flex flex-1 relative overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative">
 
-        <!-- Sidebar (Desktop & Mobile Wrapper) -->
-        <!-- Overlay for mobile -->
+        <!-- Sidebar (Desktop & Mobile) -->
         <div id="sidebar-overlay" onclick="toggleSidebar()"
-            class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
+            class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 hidden opacity-0 transition-opacity md:hidden">
+        </div>
 
         <aside id="mobile-sidebar"
-            class="glass-sidebar absolute md:relative z-50 w-72 h-full flex flex-col transform md:transform-none sidebar-closed md:block transition-transform duration-300">
-            <!-- Upload Section -->
-            <div class="p-5 border-b border-indigo-50">
-                <label for="file-upload"
-                    class="group relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-indigo-200 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300">
-                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                        <div
-                            class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i>
-                        </div>
-                        <p class="text-sm text-slate-600 font-medium group-hover:text-indigo-700">Upload PDF</p>
-                    </div>
-                    <input id="file-upload" type="file" class="hidden" accept=".pdf" onchange="uploadFile(this)" />
-                </label>
-                <div id="upload-status" class="mt-3 text-center text-xs font-medium min-h-[1.5em]"></div>
+            class="absolute md:relative z-40 bg-white/80 backdrop-blur-xl md:bg-white/50 border-r border-white/50 w-72 h-full flex flex-col -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div class="p-4 border-b border-indigo-50">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dokumen Terkait</h3>
+                <div
+                    class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-50 min-h-[100px] flex items-center justify-center text-center">
+                    <p class="text-xs text-slate-400">Dokumen sesi ini akan muncul di sini (Fitur coming soon).</p>
+                </div>
             </div>
 
-            <!-- File List -->
             <div class="flex-1 overflow-y-auto p-4">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Your Library</h3>
-                <ul id="file-list" class="space-y-2">
-                    <!-- Dynamic -->
-                </ul>
+                <!-- Placeholder for future file list in this session -->
             </div>
 
-            <!-- Footer -->
             <div class="p-4 border-t border-indigo-50 bg-indigo-50/30">
-                <p class="text-xs text-center text-slate-400">Powered by Astra DB & BytePlus</p>
+                <a href="/dashboard"
+                    class="flex items-center gap-2 text-sm text-slate-600 hover:text-indigo-600 transition font-medium">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
+                </a>
             </div>
         </aside>
 
@@ -218,9 +142,9 @@
                         <i class="fa-solid fa-robot text-4xl text-indigo-500"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-slate-800">How can I help you today?</h2>
-                        <p class="text-slate-500 max-w-md mx-auto mt-2">I can analyze your uploaded PDFs, summarize key
-                            points, or answer specific questions with citations.</p>
+                        <h2 class="text-2xl font-bold text-slate-800">Dosen Pembimbing AI</h2>
+                        <p class="text-slate-500 max-w-md mx-auto mt-2">Tanyakan apa saja tentang dokumen skripsi Anda.
+                            Saya akan menjawab dengan bahasa akademis dan referensi valid.</p>
                     </div>
 
                     <!-- Chips -->
@@ -249,223 +173,236 @@
                         <i class="fa-solid fa-sparkles text-indigo-400"></i>
                     </div>
                     <input type="text" id="user-input"
-                        class="w-full bg-white/80 backdrop-blur-sm border border-indigo-100 text-slate-800 text-sm rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 p-4 shadow-sm transition-shadow hover:shadow-md outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                        placeholder="Ask deeply about your documents..." required disabled>
-                    <button type="submit" id="send-btn"
-                        class="absolute inset-y-2 right-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-indigo-200"
-                        disabled>
-                        <i class="fa-solid fa-paper-plane"></i>
+                        class="w-full pl-12 pr-14 py-4 rounded-2xl bg-white/80 border border-indigo-100 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100/50 outline-none transition-all shadow-sm placeholder:text-slate-400 text-slate-700"
+                        placeholder="Ketik pertanyaanmu di sini..." required autocomplete="off">
+                    <button type="submit"
+                        class="absolute inset-y-2 right-2 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
                     </button>
                 </form>
                 <div class="text-center mt-2">
-                    <p class="text-[10px] text-slate-400">AI can make mistakes. Please verify important information.</p>
+                    <p class="text-[10px] text-slate-400">SkripsiSync dapat membuat kesalahan. Selalu cek kembali
+                        referensi asli (Halaman disertakan).</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Scripts -->
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script>
+        // Init Markdown
         marked.setOptions({
-            highlight: (code, lang) => hljs.getLanguage(lang) ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value,
+            highlight: function (code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-',
             breaks: true
         });
 
-        // Sidebar Toggle
-        const mobileSidebar = document.getElementById('mobile-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
+        // 1. Session Management
+        const currentSessionId = localStorage.getItem('current_session_id');
+        const currentSessionTitle = localStorage.getItem('current_session_title') || "Sesi Baru";
 
+        document.getElementById('header-session-title').innerText = currentSessionTitle;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentSessionId) {
+                loadHistory();
+            } else {
+                // If no session is active, maybe prompt user or just show general chat
+                // Ideally user comes from dashboard.
+                // console.log("No session ID found, assuming new/general chat.");
+            }
+        });
+
+        // 2. Load History
+        async function loadHistory() {
+            try {
+                const response = await fetch(`/history?session_id=${currentSessionId}`);
+                const history = await response.json();
+
+                if (history.length > 0) {
+                    document.getElementById('welcome-state').style.display = 'none';
+                    history.forEach(msg => {
+                        appendMessage(msg.role, msg.content, msg.citations);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // 3. Append Message to UI
+        function appendMessage(role, text, citations = []) {
+            const historyContainer = document.getElementById('chat-history');
+            document.getElementById('welcome-state').style.display = 'none';
+
+            const msgDiv = document.createElement('div');
+            const isUser = role === 'user';
+
+            // Process Citations
+            let citationHtml = '';
+            // Handle both legacy (list of strings) and new (list of objects?) - Assuming list of strings for now based on app.py
+            // In app.py we modified it to be JSON list.
+            if (citations && citations.length > 0) {
+                citationHtml = `<div class="mt-3 pt-3 border-t border-indigo-50 flex flex-wrap gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">Ref:</span>
+                    ${citations.map(c => `
+                        <button onclick="copyCitation('${c}')" class="group/cite text-[10px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-1 rounded border border-indigo-200 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-book-open text-indigo-400"></i>
+                            <span class="truncate max-w-[150px]">${c}</span>
+                             <i class="fa-regular fa-copy opacity-0 group-hover/cite:opacity-100 ml-1"></i>
+                        </button>
+                    `).join('')}
+                </div>`;
+            } else if (!isUser) {
+                // Copy button for AI text
+                citationHtml = `<div class="mt-2 flex justify-end">
+                     <button onclick="copyToClipboard(this)" class="text-[10px] text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition opacity-0 group-hover:opacity-100">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                  </div>`;
+            }
+
+            msgDiv.className = `flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`;
+
+            // Avatar
+            const avatar = isUser
+                ? `<div class="h-9 w-9 rounded-xl bg-slate-100 ml-3 flex items-center justify-center text-slate-500 order-2 border border-white shadow-sm"><i class="fa-solid fa-user"></i></div>`
+                : `<div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 mr-3 flex items-center justify-center text-white shadow-lg shadow-indigo-200"><i class="fa-solid fa-graduation-cap"></i></div>`;
+
+            // Bubble Style
+            const bubbleClass = isUser
+                ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl rounded-tr-sm shadow-md"
+                : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm shadow-sm";
+
+            // Content Parsing
+            const contentHtml = isUser ? text : marked.parse(text);
+
+            msgDiv.innerHTML = `
+                ${!isUser ? avatar : ''}
+                <div class="max-w-[85%] md:max-w-[75%] space-y-1 ${isUser ? 'order-1' : ''} group">
+                    <div class="text-[10px] ${isUser ? 'text-right' : 'text-left'} text-slate-400 px-1 font-medium">
+                        ${isUser ? 'Mahasiswa' : 'Dr. Sync'}
+                    </div>
+                    <div class="${bubbleClass} px-5 py-4 text-sm leading-relaxed prose prose-sm ${isUser ? 'prose-invert' : 'prose-indigo'} max-w-none">
+                        ${contentHtml}
+                    </div>
+                    ${citationHtml}
+                </div>
+                ${isUser ? avatar : ''}
+            `;
+
+            historyContainer.appendChild(msgDiv);
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+            return msgDiv;
+        }
+
+        // 4. Send Message Interaction
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Optimistic UI
+            appendMessage('user', message);
+            input.value = '';
+
+            // Thinking Indicator
+            const historyContainer = document.getElementById('chat-history');
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.id = 'thinking-indicator';
+            thinkingDiv.className = 'flex w-full justify-start animate-[fadeIn_0.3s_ease-out] mb-4';
+            thinkingDiv.innerHTML = `
+                <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 mr-3 flex items-center justify-center text-white shadow-lg shadow-indigo-200"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm flex items-center gap-2">
+                    <span class="flex gap-1">
+                        <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                        <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce animation-delay-200"></span>
+                        <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce animation-delay-400"></span>
+                    </span>
+                    <span class="text-xs text-slate-500 font-medium">Analisis referensi...</span>
+                </div>
+            `;
+            historyContainer.appendChild(thinkingDiv);
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: currentSessionId // Pass session ID!
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('thinking-indicator').remove();
+
+                if (data.error) {
+                    appendMessage('ai', "Error: " + data.error);
+                } else {
+                    appendMessage('ai', data.answer, data.context);
+                }
+            } catch (error) {
+                const indicator = document.getElementById('thinking-indicator');
+                if (indicator) indicator.remove();
+                appendMessage('ai', "Maaf, koneksi terputus. Silakan coba lagi.");
+            }
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById('user-input').value = text;
+            const event = new Event('submit');
+            document.getElementById('chat-form').dispatchEvent(event);
+        }
+
+        // 5. Utility Functions
         function toggleSidebar() {
-            const isClosed = mobileSidebar.classList.contains('sidebar-closed');
-            if (isClosed) {
-                mobileSidebar.classList.remove('sidebar-closed');
-                mobileSidebar.classList.add('sidebar-open');
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('translate-x-0');
+
+            if (sidebar.classList.contains('translate-x-0')) {
                 overlay.classList.remove('hidden');
                 setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             } else {
-                mobileSidebar.classList.remove('sidebar-open');
-                mobileSidebar.classList.add('sidebar-closed');
                 overlay.classList.add('opacity-0');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
 
-        // Quick Message
-        function sendQuickMessage(msg) {
-            document.getElementById('user-input').value = msg;
-            sendMessage(new Event('submit'));
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchDocuments();
-            fetchHistory();
-        });
-
-        async function fetchDocuments() {
-            try {
-                const res = await fetch('/documents');
-                if (!res.ok) throw new Error("Failed");
-                const docs = await res.json();
-
-                const list = document.getElementById('file-list');
-                list.innerHTML = '';
-                let tDocs = 0, tChunks = 0;
-
-                docs.forEach(doc => {
-                    tDocs++; tChunks += doc.chunk_count;
-                    const li = document.createElement('li');
-                    li.className = "group flex items-center gap-3 p-3 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-indigo-50 cursor-pointer";
-                    li.innerHTML = `
-                        <div class="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-100 transition">
-                            <i class="fa-solid fa-file-pdf"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-slate-700 truncate group-hover:text-indigo-700 transition">${doc.filename}</p>
-                            <p class="text-xs text-slate-400">${doc.chunk_count} chunks • ${new Date(doc.uploaded_at).toLocaleDateString()}</p>
-                        </div>
-                    `;
-                    list.appendChild(li);
-                });
-
-                document.getElementById('stats-display').innerText = `Docs: ${tDocs} | Chunks: ${tChunks}`;
-                if (tDocs > 0) enableInput();
-
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchHistory() {
-            try {
-                const res = await fetch('/history');
-                if (!res.ok) return;
-                const history = await res.json();
-
-                if (history.length > 0) {
-                    hideWelcome();
-                    history.forEach(m => addMessage(m.content, m.role, false, m.citations));
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function enableInput() {
-            document.getElementById('user-input').disabled = false;
-            document.getElementById('send-btn').disabled = false;
-        }
-
-        function hideWelcome() {
-            const welcome = document.getElementById('welcome-state');
-            if (welcome) welcome.style.display = 'none';
-        }
-
-        async function uploadFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const status = document.getElementById('upload-status');
-            status.innerHTML = '<span class="text-indigo-600 animate-pulse"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Indexing...</span>';
-
-            const fd = new FormData(); fd.append('file', file);
-
-            try {
-                const res = await fetch('/upload', { method: 'POST', body: fd });
-                const data = await res.json();
-                if (res.ok) {
-                    status.innerHTML = '<span class="text-green-600"><i class="fa-solid fa-check-circle mr-1"></i> Done!</span>';
-                    fetchDocuments();
-                } else {
-                    status.innerHTML = `<span class="text-red-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${data.error}</span>`;
-                }
-            } catch (e) {
-                status.innerHTML = '<span class="text-red-500">Network Error</span>';
+        function exportChat() {
+            if (!currentSessionId) {
+                alert("Tidak ada sesi aktif untuk diekspor. Silakan mulai proyek dari Dashboard.");
+                return;
             }
+            window.location.href = `/download_chat/${currentSessionId}`;
         }
 
-        async function sendMessage(e) {
-            e.preventDefault();
-            const input = document.getElementById('user-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-
-            hideWelcome();
-            addMessage(msg, 'user');
-            input.value = '';
-
-            const loadingId = addMessage('Thinking...', 'ai', true);
-
-            try {
-                const res = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg })
-                });
-                const data = await res.json();
-                document.getElementById(loadingId).remove();
-
-                if (res.ok) {
-                    addMessage(data.answer, 'ai', false, data.context);
-                } else {
-                    addMessage("Sorry, something went wrong.", 'ai');
-                }
-            } catch (e) {
-                document.getElementById(loadingId).remove();
-                addMessage("Network connection failed.", 'ai');
-            }
+        function copyCitation(text) {
+            navigator.clipboard.writeText(text);
+            alert("Sitasi disalin!");
         }
 
-        function addMessage(text, role, isLoading = false, citations = []) {
-            const box = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            div.id = isLoading ? 'loading-msg' : `msg-${Date.now()}`;
-            div.className = `flex w-full mb-6 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
-
-            // Content
-            let content = text;
-            if (role === 'ai' && !isLoading) content = marked.parse(text);
-            if (isLoading) content = `<div class="flex items-center gap-2"><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-75"></div><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-150"></div></div>`;
-
-            // Citations
-            let citHtml = '';
-            if (citations && citations.length > 0) {
-                citHtml = `
-                    <div class="mt-4 pt-3 border-t border-slate-100">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sources</p>
-                        <div class="flex flex-wrap gap-2">
-                            ${citations.map(c => `
-                                <div class="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded border border-indigo-100 flex items-center gap-1" title="${c.content || ''}">
-                                    <i class="fa-regular fa-file-pdf"></i>
-                                    <span class="max-w-[150px] truncate block">${c.source}</span>
-                                    <span class="bg-white px-1 rounded text-[10px] text-slate-500 border border-slate-100">p.${c.page}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+        function copyToClipboard(btn) {
+            // Traverse DOM to find the content div (sibling of the parent of the button)
+            // Structure: .group -> [ .text-left, .bubble, .button-container ]
+            const parent = btn.parentElement;
+            const bubble = parent.previousElementSibling;
+            if (bubble) {
+                navigator.clipboard.writeText(bubble.innerText);
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Disalin';
+                setTimeout(() => btn.innerHTML = original, 2000);
             }
-
-            const bubbleClass = role === 'user'
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl rounded-tr-sm shadow-md shadow-indigo-200'
-                : 'bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm shadow-sm';
-
-            div.innerHTML = `
-                <div class="${role === 'user' ? 'max-w-[85%]' : 'max-w-[90%] md:max-w-[80%]'} flex gap-3 ${role === 'user' ? 'flex-row-reverse' : ''} group">
-                    <!-- Avatar -->
-                    <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${role === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-md'} mt-auto">
-                        <i class="fa-solid ${role === 'user' ? 'fa-user' : 'fa-robot'} text-xs"></i>
-                    </div>
-                    
-                    <!-- Bubble -->
-                    <div class="${bubbleClass} p-4 md:p-5 text-sm leading-relaxed overflow-hidden ${role === 'ai' ? 'prose prose-indigo max-w-none' : ''}">
-                        ${content}
-                        ${citHtml}
-                    </div>
-                    
-                    <!-- Timestamp/Action (Hidden by default, show on hover?) -->
-                    <!-- Removed for simplicity -->
-                </div>
-            `;
-
-            box.appendChild(div);
-            if (window.MathJax) MathJax.typesetPromise([div]);
-            box.scrollTop = box.scrollHeight;
-            return div.id;
         }
     </script>
 </body>
