@@ -208,38 +208,7 @@ def log_activity(user_id, action, details=None):
 def index():
     return render_template('landing.html')
 
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    if not current_user.is_admin:
-        flash("Access Denied", "danger")
-        return redirect(url_for('index'))
-    
-    # Calculate Stats
-    total_users = User.query.count()
-    total_docs = Document.query.count()
-    total_chats = ChatMessage.query.filter_by(role='user').count()
-    
-    today = datetime.utcnow().date()
-    actions_today = ActivityLog.query.filter(ActivityLog.timestamp >= today).count()
-    
-    login_count = ActivityLog.query.filter_by(action='login').count()
-    upload_count = ActivityLog.query.filter_by(action='upload').count()
-    chat_count = ActivityLog.query.filter_by(action='chat').count()
-    
-    recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
-    
-    stats = {
-        'total_users': total_users,
-        'total_docs': total_docs,
-        'total_chats': total_chats,
-        'actions_today': actions_today,
-        'login_count': login_count,
-        'upload_count': upload_count,
-        'chat_count': chat_count
-    }
-    
-    return render_template('admin.html', stats=stats, recent_logs=recent_logs)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
