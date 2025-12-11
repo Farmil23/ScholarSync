@@ -24,7 +24,7 @@ from utils import get_llm
 from ingest_handler import ingest_file
 from flask_app.models import db, User, ChatSession, ChatMessage, Document, ActivityLog
 
-app = Flask(__name__)
+app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
 # Config
 app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
