@@ -90,6 +90,18 @@ with app.app_context():
     try:
         db.create_all()
         print("✅ Database tables created/verified.")
+        
+        # Simple Auto-Migration for 'thesis_stage'
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        columns = [c['name'] for c in inspector.get_columns('user')]
+        if 'thesis_stage' not in columns:
+            print("Migrating: Adding thesis_stage column to user table...")
+            with db.engine.connect() as conn:
+                conn.execute(text('ALTER TABLE "user" ADD COLUMN thesis_stage INTEGER DEFAULT 0'))
+                conn.commit()
+            print("Migration successful.")
+            
     except Exception as e:
         print(f"⚠️ Database connection failed during startup: {e}")
         # We generally do not want to stop the app here, 
@@ -570,16 +582,4 @@ if __name__ == '__main__':
     with app.app_context():
         # Ensure migration for new table
         db.create_all()
-        
-        # Simple Auto-Migration for 'thesis_stage'
-        from sqlalchemy import inspect, text
-        inspector = inspect(db.engine)
-        columns = [c['name'] for c in inspector.get_columns('user')]
-        if 'thesis_stage' not in columns:
-            print("Migrating: Adding thesis_stage column to user table...")
-            with db.engine.connect() as conn:
-                conn.execute(text('ALTER TABLE "user" ADD COLUMN thesis_stage INTEGER DEFAULT 0'))
-                conn.commit()
-            print("Migration successful.")
-
     app.run(debug=True, port=8501)
