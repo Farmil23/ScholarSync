@@ -58,6 +58,18 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Debug Handler (Temporary) ---
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    # Pass through HTTP errors
+    if isinstance(e, ValueError): # Example check
+        pass
+    
+    # Return JSON/Text traceback for debugging 500s in Vercel
+    trace = traceback.format_exc()
+    return f"<h1>Internal Server Error (Debug Mode)</h1><pre>{trace}</pre>", 500
+
 # --- Database Setup (Run once) ---
 with app.app_context():
     try:
