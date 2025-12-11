@@ -114,8 +114,9 @@
             <!-- Active Projects (Sessions) -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800"><i
-                            class="fa-solid fa-layer-group text-indigo-600 mr-2"></i> Proyek Aktif</h3>
+                    <h3 class="text-lg font-bold text-slate-800">
+                        <i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i> Proyek Aktif
+                    </h3>
                 </div>
 
                 {% if recent_sessions %}
@@ -153,16 +154,21 @@
                     {% if all_docs %}
                     <ul class="space-y-1">
                         {% for doc in all_docs %}
-                        <li class="p-3 hover:bg-white rounded-lg transition flex items-center gap-3 group">
+                        <li class="p-3 hover:bg-white rounded-lg transition flex items-center gap-3 group relative">
                             <div
                                 class="h-8 w-8 bg-red-50 text-red-500 rounded flex items-center justify-center flex-shrink-0 text-sm">
                                 <i class="fa-solid fa-file-pdf"></i>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-bold text-slate-700 truncate">{{ doc.filename }}</p>
+                            <div class="flex-1 min-w-0 pr-8">
+                                <p id="doc-name-{{ doc.id }}" class="text-xs font-bold text-slate-700 truncate"
+                                    title="{{ doc.filename }}">{{ doc.filename }}</p>
                                 <p class="text-[10px] text-slate-400">{{ doc.uploaded_at.strftime('%d/%m/%Y') }}</p>
                             </div>
-                            <!-- Future Improvement: View Doc -->
+                            <!-- Safe Rename Button -->
+                            <button onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
+                                class="absolute right-3 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 transition">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
                         </li>
                         {% endfor %}
                     </ul>
