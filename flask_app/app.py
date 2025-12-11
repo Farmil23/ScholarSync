@@ -330,56 +330,65 @@ def upload_file():
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    data = request.json
-    user_input = data.get('message')
-    
-    if not user_input:
-        return jsonify({'error': 'Empty message'}), 400
-
-    # 1. Get or Create Session
-    session_title = "General Chat"
-    chat_session = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).first()
-    if not chat_session:
-        chat_session = ChatSession(user_id=current_user.id, title=session_title)
-        db.session.add(chat_session)
-        db.session.commit()
-    
-    # 2. Get History (Last 5 turns)
-    recent_msgs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-10:]
-    
-    history_str = ""
-    for msg in recent_msgs:
-        role_marker = "User" if msg.role == 'user' else "AI"
-        history_str += f"{role_marker}: {msg.content}\n"
-            
-    # 3. Invoke Agent
-    executor = get_agent_executor(current_user.id)
-    
     try:
-        response = executor.invoke({
-            "input": user_input,
-            "chat_history": history_str
-        })
-        answer = response["output"]
-    except Exception as e:
-        print(f"Agent Execution Error: {e}")
-        # Build fallback if agent fails (e.g. parsing error loop)
-        answer = "I apologize, I encountered an issue while searching. Please try again."
+        data = request.json
+        user_input = data.get('message')
+        
+        if not user_input:
+            return jsonify({'error': 'Empty message'}), 400
 
-    # 4. Save to DB
-    user_msg_db = ChatMessage(session_id=chat_session.id, role='user', content=user_input)
-    ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=answer, citations=json.dumps([]))
-    
-    db.session.add(user_msg_db)
-    db.session.add(ai_msg_db)
-    db.session.commit()
-    
-    log_activity(current_user.id, 'chat')
-    
-    return jsonify({
-        'answer': answer,
-        'context': []
-    })
+        # 1. Get or Create Session
+        session_title = "General Chat"
+        chat_session = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).first()
+        if not chat_session:
+            chat_session = ChatSession(user_id=current_user.id, title=session_title)
+            db.session.add(chat_session)
+            db.session.commit()
+        
+        # 2. Get History (Last 5 turns)
+        recent_msgs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-10:]
+        
+        history_str = ""
+        for msg in recent_msgs:
+            role_marker = "User" if msg.role == 'user' else "AI"
+            history_str += f"{role_marker}: {msg.content}\n"
+                
+        # 3. Invoke Agent
+        # This might fail if Env Vars are missing, so it's now inside the try block
+        executor = get_agent_executor(current_user.id)
+        
+        try:
+            response = executor.invoke({
+                "input": user_input,
+                "chat_history": history_str
+            })
+            answer = response["output"]
+        except Exception as e:
+            print(f"Agent Execution Error: {e}")
+            answer = f"I encountered an error trying to search: {str(e)}"
+
+        # 4. Save to DB
+        user_msg_db = ChatMessage(session_id=chat_session.id, role='user', content=user_input)
+        ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=answer, citations=json.dumps([]))
+        
+        db.session.add(user_msg_db)
+        db.session.add(ai_msg_db)
+        db.session.commit()
+        
+        log_activity(current_user.id, 'chat')
+        
+        return jsonify({
+            'answer': answer,
+            'context': []
+        })
+    except Exception as ie:
+        import traceback
+        trace = traceback.format_exc()
+        print(f"CRITICAL CHAT ERROR: {trace}")
+        return jsonify({
+            'answer': f"System Error: {str(ie)}. Please check Vercel Logs or Environment Variables.",
+            'context': []
+        })
 
 @app.route('/history', methods=['GET'])
 @login_required
