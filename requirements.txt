@@ -34,5 +34,5 @@ streamlit>=1.30.0
 
 pymupdf
 ipykernel
-byteplussdkarkruntime
+byteplus-python-sdk-v2
 python-dotenv
