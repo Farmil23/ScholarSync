@@ -29,12 +29,18 @@ app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
 app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
 # Database Config for Vercel (Neon/Postgres)
+# Database Config for Vercel (Neon/Postgres)
 database_url = os.getenv("DATABASE_URL")
-if database_url and database_url.startswith("postgres://"):
+if not database_url:
+    # CRITICAL: In serverless (Vercel), we CANNOT use SQLite/Memory for persistence.
+    # We must enforce Neon/Postgres.
+    print("❌ ERROR: DATABASE_URL is missing in environment variables.")
+    raise RuntimeError("DATABASE_URL is missing. Please add it in Vercel Settings.")
+
+if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-# Fallback to in-memory SQLite if no URL is provided to prevent read-only filesystem crash
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///:memory:' 
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads' # Use /tmp which is writable on Vercel
 
