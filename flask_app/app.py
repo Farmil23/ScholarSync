@@ -33,9 +33,10 @@ database_url = os.getenv("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///scholarsync.db'
+# Fallback to in-memory SQLite if no URL is provided to prevent read-only filesystem crash
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///:memory:' 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads' # Use /tmp which is writable on Vercel
 
 # Init Extensions
 db.init_app(app)
@@ -53,7 +54,13 @@ def load_user(user_id):
 
 # --- Database Setup (Run once) ---
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("✅ Database tables created/verified.")
+    except Exception as e:
+        print(f"⚠️ Database connection failed during startup: {e}")
+        # We generally do not want to stop the app here, 
+        # so that the / route can still load and logs can be seen.
 
 # --- RAG / Agent Logic ---
 
