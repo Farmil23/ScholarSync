@@ -3,6 +3,9 @@ import os
 import shutil
 # from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_astradb import AstraDBVectorStore
+from langchain_openai import OpenAIEmbeddings
 
 # Reuse existing functions from utils/ingest
 from utils import get_llm

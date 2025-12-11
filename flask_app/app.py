@@ -30,12 +30,27 @@ app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
 # Database Config for Vercel (Neon/Postgres)
 # Database Config for Vercel (Neon/Postgres)
+# Database Config for Vercel (Neon/Postgres)
 database_url = os.getenv("DATABASE_URL")
+
 if not database_url:
     # CRITICAL: In serverless (Vercel), we CANNOT use SQLite/Memory for persistence.
     # We must enforce Neon/Postgres.
     print("❌ ERROR: DATABASE_URL is missing in environment variables.")
     raise RuntimeError("DATABASE_URL is missing. Please add it in Vercel Settings.")
+
+# Clean up common copy-paste errors (e.g. "psql 'postgresql://...'")
+if "psql" in database_url:
+    import re
+    # Extract just the URL part: postgres://...
+    match = re.search(r"(postgres(?:ql)?://\S+)", database_url)
+    if match:
+        database_url = match.group(1).rstrip("'")
+        print(f"⚠️ Cleaned DATABASE_URL: Detected 'psql' command, extracting URL.")
+
+if "sqlite" in database_url:
+    print("❌ ERROR: SQLite URL detected. Vercel does not support SQLite.")
+    raise RuntimeError("SQLite is not supported. Please use the Neon PostgreSQL URL.")
 
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
