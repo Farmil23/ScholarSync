@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ScholarSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 bg-gray-800 text-white">
+                <div class="flex items-center justify-center h-16 bg-gray-900 border-b border-gray-700">
+                    <span class="text-xl font-bold">Admin Panel</span>
+                </div>
+                <div class="flex-1 flex flex-col overflow-y-auto">
+                    <nav class="flex-1 px-2 py-4 space-y-2">
+                        <a href="#"
+                            class="bg-gray-900 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fa-solid fa-chart-line mr-3"></i> Dashboard
+                        </a>
+                        <a href="/"
+                            class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fa-solid fa-house mr-3"></i> Main Site
+                        </a>
+                        <a href="/logout"
+                            class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fa-solid fa-sign-out-alt mr-3"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col w-0 overflow-hidden">
+            <div class="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
+                <button
+                    class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden">
+                    <span class="sr-only">Open sidebar</span>
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="flex-1 px-4 flex justify-between">
+                    <div class="flex-1 flex"></div>
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <span class="text-gray-600 text-sm mr-4">Welcome, Admin</span>
+                    </div>
+                </div>
+            </div>
+
+            <main class="flex-1 relative overflow-y-auto focus:outline-none">
+                <div class="py-6">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                        <h1 class="text-2xl font-semibold text-gray-900">Analytics Overview</h1>
+                    </div>
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                            <!-- Users -->
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_users }}</dd>
+                                </div>
+                            </div>
+                            <!-- Docs -->
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Uploaded Documents</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_docs }}</dd>
+                                </div>
+                            </div>
+                            <!-- Chats -->
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Interactions (Chats)
+                                    </dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_chats }}</dd>
+                                </div>
+                            </div>
+                            <!-- Active Today -->
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Actions Today</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-indigo-600">{{ stats.actions_today }}
+                                    </dd>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <!-- HIDDEN DATA CONTAINER FOR CHART -->
+                        <div id="chart-data" data-login="{{ stats.login_count|default(0) }}"
+                            data-upload="{{ stats.upload_count|default(0) }}"
+                            data-chat="{{ stats.chat_count|default(0) }}" class="hidden">
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Activity Breakdown</h3>
+                                <canvas id="activityChart"></canvas>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Logs</h3>
+                                <div class="flow-root mt-6">
+                                    <ul class="-my-5 divide-y divide-gray-200">
+                                        {% for log in recent_logs %}
+                                        <li class="py-4">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="flex-shrink-0">
+                                                    {% if log.action == 'login' %}
+                                                    <span
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
+                                                        <i class="fa-solid fa-user-check text-green-600"></i>
+                                                    </span>
+                                                    {% elif log.action == 'upload' %}
+                                                    <span
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
+                                                        <i class="fa-solid fa-upload text-blue-600"></i>
+                                                    </span>
+                                                    {% else %}
+                                                    <span
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
+                                                        <i class="fa-solid fa-comment text-gray-600"></i>
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                                        User #{{ log.user_id }}
+                                                    </p>
+                                                    <p class="text-sm text-gray-500 truncate">
+                                                        {{ log.action | capitalize }} {{ log.details if log.details else
+                                                        '' }}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <a href="#"
+                                                        class="inline-flex items-center shadow-sm px-2.5 py-0.5 border border-gray-300 text-sm leading-5 font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50">
+                                                        {{ log.timestamp.strftime('%H:%M') }}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Best Practice: Fetch data from HTML attribute (avoids IDE syntax errors)
+        const dataContainer = document.getElementById('chart-data');
+        const statsData = {
+            login: parseInt(dataContainer.dataset.login),
+            upload: parseInt(dataContainer.dataset.upload),
+            chat: parseInt(dataContainer.dataset.chat)
+        };
+
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        const activityChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Logins', 'Uploads', 'Chats'],
+                datasets: [{
+                    label: '# of Actions',
+                    data: [statsData.login, statsData.upload, statsData.chat],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.6)', // Green
+                        'rgba(59, 130, 246, 0.6)', // Blue
+                        'rgba(99, 102, 241, 0.6)'  // Indigo
+                    ],
+                    borderColor: [
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(99, 102, 241, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

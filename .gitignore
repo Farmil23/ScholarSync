@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+.ipynb_checkpoints/
+
+# Data and Artifacts
+data/*
+!data/.gitkeep
+uploads/
+instance/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db

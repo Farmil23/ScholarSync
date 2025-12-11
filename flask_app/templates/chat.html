@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - ScholarSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Code Highlight -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- MathJax for Latex formulas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .chat-container {
+            height: calc(100vh - 120px);
+        }
+
+        .message-bubble {
+            max-width: 80%;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Markdown Styles within Chat */
+        .prose {
+            max-width: none;
+        }
+
+        .prose p {
+            margin-bottom: 0.5em;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .prose ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .prose strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .prose table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+            margin-bottom: 0.5em;
+        }
+
+        .prose th,
+        .prose td {
+            padding: 0.5em;
+            border: 1px solid #e5e7eb;
+        }
+
+        .prose pre {
+            background-color: #1f2937;
+            padding: 1em;
+            border-radius: 0.5em;
+            overflow-x: auto;
+            color: #e5e7eb;
+        }
+
+        .prose code {
+            font-family: monospace;
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 0.3em;
+            font-size: 0.9em;
+        }
+
+        .prose pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm z-10 w-full px-6 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-indigo-600"></i> ScholarSync
+        </h1>
+        <div class="flex items-center gap-4 text-sm text-gray-600">
+            <div class="hidden md:block bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                <i class="fa-solid fa-database text-indigo-500 mr-1"></i>
+                <span id="stats-display">Docs: 0 | Chunks: 0</span>
+            </div>
+            <a href="/" class="hover:text-indigo-600">Back to Home</a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar (Files) -->
+        <aside class="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col p-4">
+            <div class="mb-6">
+                <label for="file-upload"
+                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer bg-indigo-50 hover:bg-indigo-100 transition">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fa-solid fa-cloud-arrow-up text-indigo-500 text-2xl mb-2"></i>
+                        <p class="text-sm text-indigo-600 font-semibold">Click to Upload PDF</p>
+                        <p class="text-xs text-gray-500">MaxSize: 10MB</p>
+                    </div>
+                    <input id="file-upload" type="file" class="hidden" accept=".pdf" onchange="uploadFile(this)" />
+                </label>
+                <div id="upload-status" class="mt-2 text-center text-xs text-gray-500"></div>
+            </div>
+
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Active Documents</h3>
+            <ul id="file-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
+                <!-- Dynamically Populated -->
+            </ul>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="flex-1 flex flex-col bg-gray-50 relative">
+
+            <!-- Chat History -->
+            <div id="chat-history" class="chat-container overflow-y-auto p-6 space-y-6">
+                <!-- Welcome Message -->
+                <div class="flex justify-start">
+                    <div
+                        class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-gray-800 message-bubble border border-gray-100 markdown-body prose">
+                        <p>👋 Hello! I'm your research assistant. Upload a PDF to get started!</p>
+                        <p><em>I remember our past conversation and your documents.</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-t border-gray-200">
+                <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-3"
+                    onsubmit="sendMessage(event)">
+                    <button type="button" class="md:hidden text-gray-500"
+                        onclick="alert('Mobile file list not implemented in MVP')">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </button>
+                    <input type="text" id="user-input"
+                        class="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        placeholder="Ask deeply about your documents..." required disabled>
+                    <button type="submit" id="send-btn"
+                        class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 transition disabled:opacity-50"
+                        disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Init Markdown
+        marked.setOptions({
+            highlight: function (code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true
+        });
+
+        let totalDocs = 0;
+        let totalChunks = 0;
+
+        // --- Persistence Logic ---
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchDocuments();
+            fetchHistory();
+        });
+
+        async function fetchDocuments() {
+            try {
+                const response = await fetch('/documents');
+                if (!response.ok) return;
+                const docs = await response.json();
+
+                const list = document.getElementById('file-list');
+                list.innerHTML = ''; // Clear previous
+                totalDocs = 0;
+                totalChunks = 0;
+
+                docs.forEach(doc => {
+                    addFileToList(doc.filename, doc.chunk_count);
+                    totalDocs++;
+                    totalChunks += doc.chunk_count;
+                });
+
+                updateStats(0, 0); // Refresh display
+
+                // If we have docs, enable input
+                if (totalDocs > 0) {
+                    document.getElementById('user-input').disabled = false;
+                    document.getElementById('send-btn').disabled = false;
+                }
+
+            } catch (e) {
+                console.error("Failed to load docs", e);
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/history');
+                if (!response.ok) return;
+                const history = await response.json();
+
+                // Clear welcome message if history exists? Or just append.
+                // Let's just append.
+                history.forEach(msg => {
+                    addMessage(msg.content, msg.role, false, msg.citations);
+                });
+            } catch (e) {
+                console.error("Failed to load history", e);
+            }
+        }
+        // -------------------------
+
+        async function uploadFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('upload-status');
+            status.textContent = "Uploading & Indexing...";
+            status.className = "mt-2 text-center text-xs text-indigo-600 animate-pulse";
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (response.ok) {
+                    status.textContent = "✅ Indexed Successfully!";
+                    status.className = "mt-2 text-center text-xs text-green-600";
+                    addFileToList(file.name, result.chunks);
+                    updateStats(1, result.chunks);
+                    document.getElementById('user-input').disabled = false;
+                    document.getElementById('send-btn').disabled = false;
+                } else {
+                    status.textContent = "❌ Error: " + result.error;
+                    status.className = "mt-2 text-center text-xs text-red-600";
+                }
+            } catch (error) {
+                console.error(error);
+                status.textContent = "❌ Network Error";
+            }
+        }
+
+        function addFileToList(filename, chunks) {
+            const list = document.getElementById('file-list');
+            const li = document.createElement('li');
+            li.className = "flex items-center gap-2 text-sm text-gray-700 bg-white p-2 rounded shadow-sm border border-gray-100 hover:shadow-md transition";
+            li.innerHTML = `
+                <i class="fa-solid fa-file-pdf text-red-500"></i> 
+                <div class="flex-1 min-w-0">
+                    <p class="truncate font-medium">${filename}</p>
+                    <p class="text-xs text-gray-400">${chunks} Data Chunks</p>
+                </div>
+            `;
+            list.appendChild(li);
+        }
+
+        function updateStats(newDocs, newChunks) {
+            totalDocs += newDocs;
+            totalChunks += newChunks;
+            document.getElementById('stats-display').innerText = `Docs: ${totalDocs} | Chunks: ${totalChunks}`;
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+
+            const loadingId = addMessage('<span class="animate-pulse">Thinking...</span>', 'ai', true);
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await response.json();
+
+                document.getElementById(loadingId).remove();
+
+                if (response.ok) {
+                    addMessage(data.answer, 'ai', false, data.context);
+                } else {
+                    addMessage("Sorry, I encountered an error.", 'ai');
+                }
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                addMessage("Network connection failed.", 'ai');
+            }
+        }
+
+        function addMessage(text, sender, isLoading = false, citations = []) {
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            div.id = isLoading ? 'loading-msg' : `msg-${Date.now()}`;
+            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            let contentHtml = text;
+            // Only parse markdown for AI responses to handle lists/code properly
+            if (sender === 'ai' && !isLoading) {
+                contentHtml = marked.parse(text);
+            }
+
+            let citationHtml = '';
+            if (citations && citations.length > 0) {
+                citationHtml = `<div class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
+                    <p class="font-bold mb-2 uppercase tracking-wide text-gray-400">Sources & Evidence</p>
+                    <ul class="space-y-1">
+                        ${citations.map(c => `
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-quote-right text-indigo-300 mt-1"></i>
+                                <span>${c.source} <span class="bg-gray-100 text-gray-600 px-1 rounded ml-1">Page ${c.page}</span></span>
+                            </li>`).join('')}
+                    </ul>
+                </div>`;
+            }
+
+            const bubbleClass = sender === 'user'
+                ? 'bg-indigo-600 text-white rounded-br-none'
+                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none';
+
+            // Add 'prose' class to enable Tailwind Typography for AI messages
+            div.innerHTML = `
+                <div class="${bubbleClass} p-5 rounded-2xl shadow-sm message-bubble text-sm ${sender === 'ai' ? 'prose markdown-body' : ''}">
+                    ${contentHtml}
+                    ${citationHtml}
+                </div>
+            `;
+
+            history.appendChild(div);
+            // Trigger MathJax typeset after adding message
+            if (window.MathJax) {
+                MathJax.typesetPromise([div]);
+            }
+            history.scrollTop = history.scrollHeight;
+            return div.id;
+        }
+    </script>
+</body>
+
+</html>
