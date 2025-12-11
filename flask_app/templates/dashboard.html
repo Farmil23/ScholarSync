@@ -109,24 +109,43 @@
                 <p class="text-[10px] text-indigo-500 font-bold mt-1">Sesi aktif</p>
             </div>
 
-            <!-- Thesis Roadmap Progress (Visual) -->
+            <!-- Thesis Roadmap Progress (Interactive) -->
             <div class="glass-card p-6 rounded-2xl md:col-span-2 flex flex-col justify-center relative overflow-hidden">
                 <div class="flex justify-between items-center mb-4 z-10">
                     <h3 class="font-bold text-slate-800">Progress Skripsi</h3>
-                    <span class="text-xs font-bold bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">On Track</span>
+                    <span class="text-xs font-bold bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">
+                        {{ ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'][current_user.thesis_stage] if
+                        current_user.thesis_stage < 5 else 'Selesai' }} </span>
                 </div>
 
                 <div class="relative z-10">
-                    <div class="w-full bg-slate-100 rounded-full h-2.5 mb-4">
-                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
-                            style="width: 45%"></div>
+                    <!-- Progress Bar Background -->
+                    <div class="w-full bg-slate-100 rounded-full h-3 mb-6 relative">
+                        <!-- Active Progress -->
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-700 ease-out"
+                            style="width: {{ [(current_user.thesis_stage / 4) * 100, 100]|min }}%"></div>
+
+                        <!-- Dots -->
+                        <div class="absolute inset-0 flex justify-between items-center px-0">
+                            {% for i in range(5) %}
+                            <button onclick="updateProgress({{ i }})"
+                                class="w-4 h-4 rounded-full border-2 {{ 'bg-indigo-600 border-white shadow-md scale-125' if i <= current_user.thesis_stage else 'bg-slate-200 border-white' }} hover:scale-150 transition focus:outline-none"
+                                title="Set to {{ ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'][i] }}">
+                            </button>
+                            {% endfor %}
+                        </div>
                     </div>
+
+                    <!-- Labels -->
                     <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                        <span class="text-indigo-600">Judul</span>
-                        <span class="text-indigo-600">Bab 1</span>
-                        <span class="text-purple-600">Bab 2</span>
-                        <span>Bab 3</span>
-                        <span>Sidang</span>
+                        {% set labels = ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'] %}
+                        {% for i in range(5) %}
+                        <span
+                            class="cursor-pointer hover:text-indigo-600 transition {{ 'text-indigo-600' if i <= current_user.thesis_stage else '' }}"
+                            onclick="updateProgress({{ i }})">
+                            {{ labels[i] }}
+                        </span>
+                        {% endfor %}
                     </div>
                 </div>
 
@@ -353,6 +372,21 @@
                     }
                 } catch (e) { console.error(e); }
             }
+        }
+
+        async function updateProgress(stage) {
+            try {
+                const res = await fetch('/update_progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stage: stage })
+                });
+                if (res.ok) {
+                    window.location.reload(); // Reload to update UI state
+                } else {
+                    alert("Gagal update progress");
+                }
+            } catch (e) { console.error(e); }
         }
 
         function openSession(sessionId) {

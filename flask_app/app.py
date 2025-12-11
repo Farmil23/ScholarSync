@@ -288,7 +288,11 @@ def register():
         password = request.form.get('password')
         
         if User.query.filter_by(email=email).first():
-            flash('Email already registered', 'warning')
+            flash('Email sudah terdaftar', 'danger')
+            return redirect(url_for('register'))
+            
+        if User.query.filter_by(username=username).first():
+            flash('Username sudah digunakan, pilih yang lain', 'danger')
             return redirect(url_for('register'))
             
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -545,6 +549,53 @@ def get_session_documents(session_id):
         'uploaded_at': d.uploaded_at.isoformat()
     } for d in session.documents]
     return jsonify(docs)
+
+@app.route('/update_progress', methods=['POST'])
+@login_required
+def update_progress():
+    data = request.json
+    try:
+        current_user.thesis_stage = int(data.get('stage', 0))
+        db.session.commit()
+        return jsonify({'message': 'Progress updated'})
+    except:
+        return jsonify({'error': 'Failed to update'}), 400
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Akses ditolak. Halaman ini hanya untuk Administrator.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Fetch Data
+    users_count = User.query.count()
+    docs_count = Document.query.count()
+    chats_count = ChatSession.query.count()
+    
+    # Logs
+    recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(20).all()
+    
+    # Stats for Charts
+    import datetime
+    today = datetime.date.today()
+    actions_today = ActivityLog.query.filter(ActivityLog.timestamp >= today).count()
+    
+    login_count = ActivityLog.query.filter_by(action='login').count()
+    upload_count = ActivityLog.query.filter_by(action='upload').count()
+    chat_count = ActivityLog.query.filter_by(action='chat').count()
+
+    stats = {
+        'total_users': users_count,
+        'total_docs': docs_count,
+        'total_chats': chats_count,
+        'actions_today': actions_today,
+        'login_count': login_count,
+        'upload_count': upload_count,
+        'chat_count': chat_count
+    }
+    
+    return render_template('admin.html', stats=stats, recent_logs=recent_logs)
 
 if __name__ == '__main__':
     with app.app_context():

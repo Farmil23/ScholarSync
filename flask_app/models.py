@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_admin = db.Column(db.Boolean, default=False)
+    thesis_stage = db.Column(db.Integer, default=0) # 0: Judul, 1: Bab 1, 2: Bab 2, 3: Bab 3, 4: Sidang
 
 class ActivityLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
