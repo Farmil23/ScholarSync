@@ -33,4 +33,4 @@ pypdf>=4.0.1
 # ipykernel # Removed
 byteplus-python-sdk-v2
 python-dotenv
-ddg
+ddgs

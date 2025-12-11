@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkripsiSync - Asisten Skripsi & Jurnal AI</title>
+    <title>SkripsiSync - Asisten Skripsi #1 Mahasiswa Indonesia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -12,25 +12,15 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            scroll-behavior: smooth;
         }
 
-        /* Premium Gradient Background */
-        .premium-bg {
-            background: radial-gradient(circle at top left, #e0e7ff 0%, #ffffff 40%),
-                radial-gradient(circle at bottom right, #f3e8ff 0%, #ffffff 40%);
-        }
-
-        /* Glassmorphism */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.7);
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .accent-text {
+        .gradient-text {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -38,159 +28,285 @@
     </style>
 </head>
 
-<body class="premium-bg text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+<body class="bg-indigo-50/30 text-slate-800">
 
-    <!-- Navigation (Sticky Glass) -->
-    <nav class="fixed w-full z-50 transition-all duration-300 glass-card border-b border-white/50 top-0">
+    <!-- Header -->
+    <nav class="glass-nav fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
+            <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-2">
                     <div
-                        class="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                        class="h-10 w-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <i class="fa-solid fa-graduation-cap"></i>
                     </div>
-                    <span
-                        class="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">SkripsiSync</span>
+                    <span class="font-bold text-xl tracking-tight">SkripsiSync</span>
                 </div>
-                <div class="hidden md:flex items-center space-x-6">
+
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features"
+                        class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">Fitur</a>
+                    <a href="#how-it-works"
+                        class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">Cara Kerja</a>
+                    <a href="#faq" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">FAQ</a>
+                </div>
+
+                <div class="flex items-center gap-4">
                     {% if current_user.is_authenticated %}
                     <a href="/dashboard"
-                        class="text-slate-600 hover:text-indigo-600 font-medium transition">Dashboard</a>
-                    <a href="/logout"
-                        class="px-5 py-2.5 rounded-full bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Logout</a>
+                        class="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-full hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+                        Dashboard <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </a>
                     {% else %}
-                    <a href="/login" class="text-slate-600 hover:text-indigo-600 font-medium transition px-4">Masuk</a>
+                    <a href="/login" class="text-sm font-bold text-slate-600 hover:text-indigo-600 transition">Masuk</a>
                     <a href="/register"
-                        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-105 transition transform">Daftar
-                        Gratis</a>
+                        class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition transform hover:-translate-y-0.5">
+                        Daftar Gratis
+                    </a>
                     {% endif %}
-                </div>
-                <!-- Mobile Menu Icon (Placeholder) -->
-                <div class="md:hidden text-slate-600 text-2xl">
-                    <a href="/login"><i class="fa-solid fa-right-to-bracket"></i></a>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <div class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <!-- Floating Blobs -->
-        <div
-            class="absolute top-20 left-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
-        </div>
-        <div
-            class="absolute top-20 right-10 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
-        </div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <div
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-wide mb-6">
-                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                Partner Resmi Pejuang Skripsi
-            </div>
-
-            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
-                Selesaikan Skripsi <br />
-                <span class="accent-text animate-gradient">10x Lebih Cepat</span>
+    <section class="pt-32 pb-20 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <span
+                class="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-6 border border-indigo-100">
+                🚀 Partner Resmi Pejuang Skripsi
+            </span>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 leading-tight mb-8">
+                Selesaikan Skripsi <br>
+                <span class="gradient-text">10x Lebih Cepat</span>
             </h1>
-
-            <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-slate-500 leading-relaxed">
-                Bingung cari Research Gap? Pusing menyusun Kerangka Teori?
-                Upload jurnal referensimu, dan biarkan <span class="font-bold text-slate-800">Dosen AI</span> kami
-                menuntunmu hingga Bab terakhir.
+            <p class="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Platform AI yang didesain khusus untuk mahasiswa tingkat akhir. Cari <b>Research Gap</b>, susun
+                <b>Kerangka Teori</b>, dan validasi referensi tanpa drama.
             </p>
-
-            <div class="mt-10 flex justify-center gap-4">
-                <a href="/chat"
-                    class="px-8 py-4 rounded-full bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition shadow-xl hover:shadow-2xl hover:-translate-y-1 transform">
-                    Mulai Konsultasi <i class="fa-solid fa-arrow-right ml-2 opacity-70"></i>
+            <div class="flex justify-center gap-4">
+                <a href="/register"
+                    class="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition shadow-xl shadow-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> Mulai Konsultasi
                 </a>
-                <a href="#features"
-                    class="px-8 py-4 rounded-full bg-white text-slate-700 font-bold text-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm hover:shadow-md">
-                    Cara Kerja
+                <a href="#how-it-works"
+                    class="px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center gap-2">
+                    <i class="fa-regular fa-circle-play"></i> Cara Kerja
                 </a>
-            </div>
-
-            <!-- Hero Image Mockup -->
-            <div
-                class="mt-16 mx-auto max-w-5xl rounded-2xl glass-card p-2 shadow-2xl skew-y-1 hover:skew-y-0 transition-transform duration-700">
-                <div
-                    class="rounded-xl overflow-hidden bg-slate-50 aspect-[16/9] flex items-center justify-center border border-slate-100 relative group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
-                    <!-- Placeholder UI image mimicking the dashboard -->
-                    <div class="text-center">
-                        <i class="fa-solid fa-laptop-code text-6xl text-indigo-200 mb-4"></i>
-                        <p class="text-slate-400 font-medium">Dashboard Konsultasi Modern</p>
-                    </div>
-                </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Features Section -->
-    <div id="features" class="py-24 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- UI Mockup -->
+    <section class="max-w-6xl mx-auto px-4 mb-24 relative z-10">
+        <div class="glass-nav rounded-2xl border border-slate-200 p-2 shadow-2xl shadow-indigo-100">
+            <div class="bg-slate-50 rounded-xl overflow-hidden aspect-[16/9] relative flex items-center justify-center">
+                <div class="text-center">
+                    <i class="fa-solid fa-laptop-code text-6xl text-indigo-200 mb-4"></i>
+                    <p class="text-indigo-300 font-bold">Dashboard Konsultasi Modern</p>
+                </div>
+                <!-- You can replace this inner div with an <img> tag later -->
+            </div>
+        </div>
+        <!-- Decorative blobs -->
+        <div
+            class="absolute top-1/2 left-0 -z-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+        </div>
+        <div
+            class="absolute top-1/2 right-0 -z-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-200">
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
             <div class="text-center mb-16">
                 <h2 class="text-3xl font-bold text-slate-900">Kenapa SkripsiSync?</h2>
-                <p class="mt-4 text-slate-500">Dibuat khusus untuk mahasiswa tingkat akhir yang butuh kepastian.</p>
+                <p class="text-slate-500 mt-4">Dibuat oleh mahasiswa (alumni), untuk mahasiswa.</p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300">
+                <div
+                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-50 transition group">
                     <div
-                        class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-6">
+                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition">
                         <i class="fa-solid fa-magnifying-glass-chart"></i>
                     </div>
                     <h3 class="text-xl font-bold text-slate-800 mb-3">Cari Research Gap</h3>
-                    <p class="text-slate-500 leading-relaxed">
-                        Upload 5-10 jurnal, AI akan menganalisis celah penelitian yang belum dibahas orang lain. Judulmu
-                        pasti unik!
-                    </p>
+                    <p class="text-slate-500 leading-relaxed">Bingung mau neliti apa? Upload 5 jurnal terkait, AI kami
+                        akan menemukan celah penelitian yang belum disentuh.</p>
                 </div>
 
                 <!-- Card 2 -->
                 <div
-                    class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300 border-indigo-100 ring-2 ring-indigo-50/50">
+                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-purple-100 hover:shadow-xl hover:shadow-purple-50 transition group">
                     <div
-                        class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-user-graduate"></i>
+                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-user-tie"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Konsultasi 24/7</h3>
-                    <p class="text-slate-500 leading-relaxed">
-                        Tak perlu menunggu dosen pembimbing. Tanyakan metodologi, teori, atau revisi kalimat kapan saja.
-                    </p>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Dosen AI 24/7</h3>
+                    <p class="text-slate-500 leading-relaxed">Tanya revisian jam 2 pagi? Dr. Sync siap membantu kritik
+                        metodologi dan struktur penulisanmu.</p>
                 </div>
 
                 <!-- Card 3 -->
-                <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300">
+                <div
+                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-50 transition group">
                     <div
-                        class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-6">
+                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:scale-110 transition">
                         <i class="fa-solid fa-quote-right"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Referensi Valid</h3>
-                    <p class="text-slate-500 leading-relaxed">
-                        Setiap jawaban dilengkapi sitasi ke halaman dokumen aslinya. Anti-halusinasi, aman untuk daftar
-                        pustaka.
-                    </p>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Anti Halusinasi</h3>
+                    <p class="text-slate-500 leading-relaxed">Setiap argumen yang dikeluarkan AI dilengkapi sitasi
+                        halaman referensi asli. Validitas terjamin.</p>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- How It Works (Docs) -->
+    <section id="how-it-works" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6">Cara Kerja Simpel <br> <span
+                            class="text-indigo-400">3 Langkah Lulus</span></h2>
+
+                    <div class="space-y-8">
+                        <div class="flex gap-4">
+                            <div
+                                class="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold flex-shrink-0">
+                                1</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Buat Proyek Baru</h4>
+                                <p class="text-slate-400 text-sm mt-1">Beri nama proyek (misal: "Bab 2") di Dashboard.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div
+                                class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center font-bold flex-shrink-0">
+                                2</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Upload Referensi</h4>
+                                <p class="text-slate-400 text-sm mt-1">Upload PDF Jurnal atau Skripsi terdahulu. AI akan
+                                    membacanya dalam detik.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div
+                                class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center font-bold flex-shrink-0">
+                                3</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Konsultasi & Export</h4>
+                                <p class="text-slate-400 text-sm mt-1">Tanya apa saja, lalu download draft hasil diskusi
+                                    ke Word.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <!-- Illustration Placeholder -->
+                    <div
+                        class="bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl p-1 shadow-2xl rotate-3 hover:rotate-0 transition duration-500">
+                        <div
+                            class="bg-slate-800 rounded-2xl h-80 flex items-center justify-center border border-white/10">
+                            <i class="fa-solid fa-robot text-8xl text-white/20"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="py-24 bg-indigo-50/50">
+        <div class="max-w-3xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-12">Pertanyaan Umum (FAQ)</h2>
+
+            <div class="space-y-4">
+                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
+                    <summary
+                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
+                        <span>Apakah gratis digunakan?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
+                    </summary>
+                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
+                        Ya! Saat ini SkripsiSync dalam fase Beta dan gratis untuk semua mahasiswa. Kami mungkin akan
+                        memperkenalkan fitur premium di masa depan.
+                    </div>
+                </details>
+
+                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
+                    <summary
+                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
+                        <span>Apakah data skripsi saya aman?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
+                    </summary>
+                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
+                        Sangat aman. Dokumen Anda dienkripsi dan hanya dapat diakses oleh Anda sendiri dalam sesi privat
+                        (Private Workspace). Kami tidak menjual data Anda.
+                    </div>
+                </details>
+                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
+                    <summary
+                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
+                        <span>Berapa banyak dokumen yang bisa diupload?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
+                    </summary>
+                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
+                        Anda bisa mengupload hingga 20 dokumen PDF per akun untuk saat ini. Cukup untuk satu bab
+                        skripsi!
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-100 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex justify-center items-center gap-2 mb-6">
-                <i class="fa-solid fa-graduation-cap text-indigo-600 text-xl"></i>
-                <span class="font-bold text-xl text-slate-800">SkripsiSync</span>
+    <footer class="bg-white border-t border-slate-100 py-12">
+        <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                        <i class="fa-solid fa-graduation-cap text-xs"></i>
+                    </div>
+                    <span class="font-bold text-lg">SkripsiSync</span>
+                </div>
+                <p class="text-slate-400 text-sm max-w-xs mb-6">Membantu mahasiswa Indonesia lulus tepat waktu dengan
+                    teknologi AI tercanggih.</p>
+                <div class="flex gap-4">
+                    <a href="#"
+                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
+                            class="fa-brands fa-twitter"></i></a>
+                    <a href="#"
+                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
+                            class="fa-brands fa-instagram"></i></a>
+                    <a href="#"
+                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
+                            class="fa-brands fa-linkedin"></i></a>
+                </div>
             </div>
-            <p class="text-slate-400 mb-8 max-w-md mx-auto">Membantu mahasiswa lulus tepat waktu dengan teknologi AI
-                tercanggih.</p>
-            <div class="text-sm text-slate-400">
-                &copy; 2024 SkripsiSync. Built with <i class="fa-solid fa-heart text-red-400"></i> by Farhan Kamil.
+
+            <div>
+                <h4 class="font-bold text-slate-800 mb-4">Produk</h4>
+                <ul class="space-y-2 text-sm text-slate-500">
+                    <li><a href="#features" class="hover:text-indigo-600">Fitur Utama</a></li>
+                    <li><a href="#" class="hover:text-indigo-600">Harga</a></li>
+                    <li><a href="#" class="hover:text-indigo-600">Testimoni</a></li>
+                </ul>
             </div>
+
+            <div>
+                <h4 class="font-bold text-slate-800 mb-4">Legal</h4>
+                <ul class="space-y-2 text-sm text-slate-500">
+                    <li><a href="#" class="hover:text-indigo-600">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-indigo-600">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-slate-100 text-center text-xs text-slate-400">
+            &copy; 2024 SkripsiSync. Dibuat dengan ☕ dan Kode.
         </div>
     </footer>
 

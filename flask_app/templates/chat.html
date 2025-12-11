@@ -206,17 +206,78 @@
         const currentSessionId = localStorage.getItem('current_session_id');
         const currentSessionTitle = localStorage.getItem('current_session_title') || "Sesi Baru";
 
-        document.getElementById('header-session-title').innerText = currentSessionTitle;
+        // Enable Rename in Header
+        const titleEl = document.getElementById('header-session-title');
+        titleEl.innerText = currentSessionTitle;
+        titleEl.parentElement.innerHTML += `
+            <button onclick="renameSession()" class="ml-2 text-[10px] text-slate-300 hover:text-indigo-200 transition">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        `;
 
         window.addEventListener('DOMContentLoaded', () => {
             if (currentSessionId) {
                 loadHistory();
-            } else {
-                // If no session is active, maybe prompt user or just show general chat
-                // Ideally user comes from dashboard.
-                // console.log("No session ID found, assuming new/general chat.");
+                loadSessionDocs();
             }
         });
+
+        // 1.5 Rename Session Logic
+        async function renameSession() {
+            const newTitle = prompt("Ganti nama sesi:", currentSessionTitle);
+            if (newTitle && newTitle !== currentSessionTitle) {
+                try {
+                    const res = await fetch(`/session/${currentSessionId}/rename`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: newTitle })
+                    });
+                    if (res.ok) {
+                        document.getElementById('header-session-title').innerText = newTitle;
+                        localStorage.setItem('current_session_title', newTitle);
+                        // alert("Berhasil diubah!");
+                    } else {
+                        alert("Gagal mengubah nama.");
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        // 1.6 Load Session Docs (for Sidebar)
+        async function loadSessionDocs() {
+            if (!currentSessionId) return;
+            try {
+                const res = await fetch(`/session/${currentSessionId}/documents`);
+                const docs = await res.json();
+
+                // Target sidebar container
+                const container = document.querySelector('#mobile-sidebar .overflow-y-auto');
+                if (container) {
+                    container.innerHTML = '';
+                    if (docs.length === 0) {
+                        container.innerHTML = `<div class="p-4 text-xs text-center text-slate-400">Belum ada dokumen yang dipilih.</div>`;
+                    } else {
+                        const ul = document.createElement('ul');
+                        ul.className = "space-y-2";
+                        docs.forEach(doc => {
+                            const li = document.createElement('li');
+                            li.className = "p-3 bg-white border border-indigo-50 rounded-xl flex items-center gap-3 shadow-sm";
+                            li.innerHTML = `
+                                <div class="h-8 w-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center text-xs border border-red-100"><i class="fa-solid fa-file-pdf"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-slate-700 truncate" title="${doc.filename}">${doc.filename}</p>
+                                    <p class="text-[10px] text-slate-400">${new Date(doc.uploaded_at).toLocaleDateString()}</p>
+                                </div>
+                            `;
+                            ul.appendChild(li);
+                        });
+                        container.appendChild(ul);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load session docs", e);
+            }
+        }
 
         // 2. Load History
         async function loadHistory() {

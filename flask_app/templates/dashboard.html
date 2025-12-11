@@ -252,12 +252,6 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Save session ID to local storage implicitly? 
-                    // Better: Redirect to Chat with a param or just let Chat page handle it.
-                    // Actually, we want to go Open the chat with THIS session.
-                    // We need to modify Chat page to accept session_id.
-
-                    // For now, let's store it in localStorage or just redirect
                     localStorage.setItem('current_session_id', data.session_id);
                     localStorage.setItem('current_session_title', title);
                     window.location.href = '/chat';
@@ -270,8 +264,33 @@
             }
         }
 
+        async function renameDoc(docId, currentName) {
+            const newName = prompt("Ganti nama dokumen:", currentName);
+            if (newName && newName !== currentName) {
+                try {
+                    const res = await fetch(`/document/${docId}/rename`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: newName })
+                    });
+                    if (res.ok) {
+                        // Update UI simply by reloading or changing text
+                        // For simplicity, we just update text to avoid reload
+                        document.getElementById(`doc-name-${docId}`).innerText = newName;
+                    } else {
+                        alert("Gagal mengubah nama.");
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
         function openSession(sessionId) {
+            // Need to fetch title or pass it in. For now, we trust the ID load.
+            // Ideally we also fetch title to update localStorage or rely on Chat Page to catch up.
             localStorage.setItem('current_session_id', sessionId);
+            // We can't easily get title here without traversing DOM or making request. 
+            // We'll let Chat page handle "Loading..." then fetching title if possible,
+            // OR we can pass title in arguments.
             window.location.href = '/chat';
         }
     </script>

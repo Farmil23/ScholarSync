@@ -509,6 +509,43 @@ def get_history():
         })
     return jsonify(output)
 
+@app.route('/session/<int:session_id>/rename', methods=['PUT'])
+@login_required
+def rename_session(session_id):
+    chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    data = request.json
+    new_title = data.get('title')
+    if new_title:
+        chat_session.title = new_title
+        db.session.commit()
+        return jsonify({'message': 'Session renamed'})
+    return jsonify({'error': 'No title provided'}), 400
+
+@app.route('/document/<int:doc_id>/rename', methods=['PUT'])
+@login_required
+def rename_document(doc_id):
+    doc = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    data = request.json
+    new_name = data.get('filename')
+    if new_name:
+        # Note: This only changes the display name in the DB. 
+        # Vector store metadata won't update, but user will see the new name in UI.
+        doc.filename = new_name
+        db.session.commit()
+        return jsonify({'message': 'Document renamed'})
+    return jsonify({'error': 'No filename provided'}), 400
+
+@app.route('/session/<int:session_id>/documents', methods=['GET'])
+@login_required
+def get_session_documents(session_id):
+    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    docs = [{
+        'id': d.id,
+        'filename': d.filename,
+        'uploaded_at': d.uploaded_at.isoformat()
+    } for d in session.documents]
+    return jsonify(docs)
+
 if __name__ == '__main__':
     with app.app_context():
         # Ensure migration for new table
