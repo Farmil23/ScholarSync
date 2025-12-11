@@ -14,174 +14,288 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <!-- MathJax for Latex formulas -->
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
-        .chat-container {
-            height: calc(100vh - 120px);
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f5f3ff 100%);
         }
 
-        .message-bubble {
-            max-width: 80%;
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-container {
+            height: calc(100vh - 140px);
+            /* Adjusted for header padding */
         }
 
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
 
-        /* Markdown Styles within Chat */
-        .prose {
-            max-width: none;
+        /* Thin Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
 
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Markdown Styles within Chat */
         .prose p {
-            margin-bottom: 0.5em;
+            margin-bottom: 0.75em;
+            line-height: 1.6;
+        }
+
+        .prose ul,
+        .prose ol {
+            margin-left: 1.25em;
+            margin-bottom: 0.75em;
         }
 
         .prose ul {
             list-style-type: disc;
-            padding-left: 1.5em;
-            margin-bottom: 0.5em;
         }
 
         .prose ol {
             list-style-type: decimal;
-            padding-left: 1.5em;
-            margin-bottom: 0.5em;
         }
 
         .prose strong {
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .prose table {
-            width: 100%;
-            text-align: left;
-            border-collapse: collapse;
-            margin-bottom: 0.5em;
-        }
-
-        .prose th,
-        .prose td {
-            padding: 0.5em;
-            border: 1px solid #e5e7eb;
+            color: #1e293b;
+            font-weight: 600;
         }
 
         .prose pre {
-            background-color: #1f2937;
+            background: #1e293b;
             padding: 1em;
             border-radius: 0.5em;
             overflow-x: auto;
-            color: #e5e7eb;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
         }
 
         .prose code {
-            font-family: monospace;
-            background-color: #f3f4f6;
+            background: #f1f5f9;
             padding: 0.2em 0.4em;
-            border-radius: 0.3em;
-            font-size: 0.9em;
+            border-radius: 0.25em;
+            font-size: 0.875em;
+            color: #ef4444;
+            font-family: monospace;
         }
 
         .prose pre code {
-            background-color: transparent;
-            padding: 0;
+            background: transparent;
             color: inherit;
+            padding: 0;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #6366f1;
+            padding-left: 1em;
+            color: #475569;
+            font-style: italic;
+        }
+
+        /* Mobile Sidebar Transition */
+        #mobile-sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar-open {
+            transform: translateX(0);
+        }
+
+        .sidebar-closed {
+            transform: translateX(-100%);
         }
     </style>
 </head>
 
-<body class="bg-gray-100 h-screen flex flex-col">
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm z-10 w-full px-6 py-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-graduation-cap text-indigo-600"></i> ScholarSync
-        </h1>
-        <div class="flex items-center gap-4 text-sm text-gray-600">
-            <div class="hidden md:block bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-                <i class="fa-solid fa-database text-indigo-500 mr-1"></i>
-                <span id="stats-display">Docs: 0 | Chunks: 0</span>
+    <!-- Header (Glass) -->
+    <header class="glass sticky top-0 z-30 w-full px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-4">
+            <!-- Mobile Menu Button -->
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-500 hover:text-indigo-600 focus:outline-none">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            <h1
+                class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-indigo-600"></i> ScholarSync
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3 text-sm">
+            <div
+                class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50/50 border border-indigo-100 text-indigo-700">
+                <i class="fa-solid fa-server text-xs"></i>
+                <span id="stats-display" class="font-medium text-xs">Docs: 0 | Chunks: 0</span>
             </div>
-            <a href="/" class="hover:text-indigo-600">Back to Home</a>
+            <a href="/" class="text-slate-500 hover:text-indigo-600 transition font-medium">Exit</a>
+            <div
+                class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
+                {{ user.username[0].upper() }}
+            </div>
         </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar (Files) -->
-        <aside class="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col p-4">
-            <div class="mb-6">
+    <div class="flex flex-1 relative overflow-hidden">
+
+        <!-- Sidebar (Desktop & Mobile Wrapper) -->
+        <!-- Overlay for mobile -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()"
+            class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
+
+        <aside id="mobile-sidebar"
+            class="glass-sidebar absolute md:relative z-50 w-72 h-full flex flex-col transform md:transform-none sidebar-closed md:block transition-transform duration-300">
+            <!-- Upload Section -->
+            <div class="p-5 border-b border-indigo-50">
                 <label for="file-upload"
-                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer bg-indigo-50 hover:bg-indigo-100 transition">
+                    class="group relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-indigo-200 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                        <i class="fa-solid fa-cloud-arrow-up text-indigo-500 text-2xl mb-2"></i>
-                        <p class="text-sm text-indigo-600 font-semibold">Click to Upload PDF</p>
-                        <p class="text-xs text-gray-500">MaxSize: 10MB</p>
+                        <div
+                            class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i>
+                        </div>
+                        <p class="text-sm text-slate-600 font-medium group-hover:text-indigo-700">Upload PDF</p>
                     </div>
                     <input id="file-upload" type="file" class="hidden" accept=".pdf" onchange="uploadFile(this)" />
                 </label>
-                <div id="upload-status" class="mt-2 text-center text-xs text-gray-500"></div>
+                <div id="upload-status" class="mt-3 text-center text-xs font-medium min-h-[1.5em]"></div>
             </div>
 
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Active Documents</h3>
-            <ul id="file-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
-                <!-- Dynamically Populated -->
-            </ul>
+            <!-- File List -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Your Library</h3>
+                <ul id="file-list" class="space-y-2">
+                    <!-- Dynamic -->
+                </ul>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-indigo-50 bg-indigo-50/30">
+                <p class="text-xs text-center text-slate-400">Powered by Astra DB & BytePlus</p>
+            </div>
         </aside>
 
-        <!-- Chat Area -->
-        <main class="flex-1 flex flex-col bg-gray-50 relative">
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col relative w-full">
 
             <!-- Chat History -->
-            <div id="chat-history" class="chat-container overflow-y-auto p-6 space-y-6">
-                <!-- Welcome Message -->
-                <div class="flex justify-start">
+            <div id="chat-history" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
+                <!-- Welcome / Empty State -->
+                <div id="welcome-state"
+                    class="flex flex-col items-center justify-center h-full text-center space-y-6 opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]">
                     <div
-                        class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-gray-800 message-bubble border border-gray-100 markdown-body prose">
-                        <p>👋 Hello! I'm your research assistant. Upload a PDF to get started!</p>
-                        <p><em>I remember our past conversation and your documents.</em></p>
+                        class="h-20 w-20 bg-gradient-to-br from-indigo-100 to-white rounded-2xl shadow-inner flex items-center justify-center mb-2">
+                        <i class="fa-solid fa-robot text-4xl text-indigo-500"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">How can I help you today?</h2>
+                        <p class="text-slate-500 max-w-md mx-auto mt-2">I can analyze your uploaded PDFs, summarize key
+                            points, or answer specific questions with citations.</p>
+                    </div>
+
+                    <!-- Chips -->
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <button onclick="sendQuickMessage('Summarize the uploaded document')"
+                            class="px-4 py-2 bg-white border border-indigo-100 rounded-full text-sm text-indigo-600 hover:bg-indigo-50 hover:shadow-sm transition shadow-sm">
+                            📝 Summarize Doc
+                        </button>
+                        <button onclick="sendQuickMessage('What are the key findings?')"
+                            class="px-4 py-2 bg-white border border-indigo-100 rounded-full text-sm text-indigo-600 hover:bg-indigo-50 hover:shadow-sm transition shadow-sm">
+                            🔑 Key Findings
+                        </button>
+                        <button onclick="sendQuickMessage('Explain the methodology used')"
+                            class="px-4 py-2 bg-white border border-indigo-100 rounded-full text-sm text-indigo-600 hover:bg-indigo-50 hover:shadow-sm transition shadow-sm">
+                            🧪 Methodology
+                        </button>
                     </div>
                 </div>
+                <!-- Messages will appear here -->
             </div>
 
             <!-- Input Area -->
-            <div class="p-4 bg-white border-t border-gray-200">
-                <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-3"
-                    onsubmit="sendMessage(event)">
-                    <button type="button" class="md:hidden text-gray-500"
-                        onclick="alert('Mobile file list not implemented in MVP')">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </button>
+            <div class="p-4 md:p-6 glass border-t border-white/50">
+                <form id="chat-form" onsubmit="sendMessage(event)" class="max-w-4xl mx-auto relative group">
+                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-sparkles text-indigo-400"></i>
+                    </div>
                     <input type="text" id="user-input"
-                        class="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        class="w-full bg-white/80 backdrop-blur-sm border border-indigo-100 text-slate-800 text-sm rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 p-4 shadow-sm transition-shadow hover:shadow-md outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
                         placeholder="Ask deeply about your documents..." required disabled>
                     <button type="submit" id="send-btn"
-                        class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 transition disabled:opacity-50"
+                        class="absolute inset-y-2 right-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-indigo-200"
                         disabled>
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
+                <div class="text-center mt-2">
+                    <p class="text-[10px] text-slate-400">AI can make mistakes. Please verify important information.</p>
+                </div>
             </div>
         </main>
     </div>
 
     <!-- Scripts -->
     <script>
-        // Init Markdown
         marked.setOptions({
-            highlight: function (code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                return hljs.highlightAuto(code).value;
-            },
+            highlight: (code, lang) => hljs.getLanguage(lang) ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value,
             breaks: true
         });
 
-        let totalDocs = 0;
-        let totalChunks = 0;
+        // Sidebar Toggle
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
 
-        // --- Persistence Logic ---
+        function toggleSidebar() {
+            const isClosed = mobileSidebar.classList.contains('sidebar-closed');
+            if (isClosed) {
+                mobileSidebar.classList.remove('sidebar-closed');
+                mobileSidebar.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                mobileSidebar.classList.remove('sidebar-open');
+                mobileSidebar.classList.add('sidebar-closed');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // Quick Message
+        function sendQuickMessage(msg) {
+            document.getElementById('user-input').value = msg;
+            sendMessage(new Event('submit'));
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             fetchDocuments();
             fetchHistory();
@@ -189,179 +303,168 @@
 
         async function fetchDocuments() {
             try {
-                const response = await fetch('/documents');
-                if (!response.ok) return;
-                const docs = await response.json();
+                const res = await fetch('/documents');
+                if (!res.ok) throw new Error("Failed");
+                const docs = await res.json();
 
                 const list = document.getElementById('file-list');
-                list.innerHTML = ''; // Clear previous
-                totalDocs = 0;
-                totalChunks = 0;
+                list.innerHTML = '';
+                let tDocs = 0, tChunks = 0;
 
                 docs.forEach(doc => {
-                    addFileToList(doc.filename, doc.chunk_count);
-                    totalDocs++;
-                    totalChunks += doc.chunk_count;
+                    tDocs++; tChunks += doc.chunk_count;
+                    const li = document.createElement('li');
+                    li.className = "group flex items-center gap-3 p-3 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-indigo-50 cursor-pointer";
+                    li.innerHTML = `
+                        <div class="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-100 transition">
+                            <i class="fa-solid fa-file-pdf"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-700 truncate group-hover:text-indigo-700 transition">${doc.filename}</p>
+                            <p class="text-xs text-slate-400">${doc.chunk_count} chunks • ${new Date(doc.uploaded_at).toLocaleDateString()}</p>
+                        </div>
+                    `;
+                    list.appendChild(li);
                 });
 
-                updateStats(0, 0); // Refresh display
+                document.getElementById('stats-display').innerText = `Docs: ${tDocs} | Chunks: ${tChunks}`;
+                if (tDocs > 0) enableInput();
 
-                // If we have docs, enable input
-                if (totalDocs > 0) {
-                    document.getElementById('user-input').disabled = false;
-                    document.getElementById('send-btn').disabled = false;
-                }
-
-            } catch (e) {
-                console.error("Failed to load docs", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchHistory() {
             try {
-                const response = await fetch('/history');
-                if (!response.ok) return;
-                const history = await response.json();
+                const res = await fetch('/history');
+                if (!res.ok) return;
+                const history = await res.json();
 
-                // Clear welcome message if history exists? Or just append.
-                // Let's just append.
-                history.forEach(msg => {
-                    addMessage(msg.content, msg.role, false, msg.citations);
-                });
-            } catch (e) {
-                console.error("Failed to load history", e);
-            }
+                if (history.length > 0) {
+                    hideWelcome();
+                    history.forEach(m => addMessage(m.content, m.role, false, m.citations));
+                }
+            } catch (e) { console.error(e); }
         }
-        // -------------------------
+
+        function enableInput() {
+            document.getElementById('user-input').disabled = false;
+            document.getElementById('send-btn').disabled = false;
+        }
+
+        function hideWelcome() {
+            const welcome = document.getElementById('welcome-state');
+            if (welcome) welcome.style.display = 'none';
+        }
 
         async function uploadFile(input) {
             const file = input.files[0];
             if (!file) return;
-
             const status = document.getElementById('upload-status');
-            status.textContent = "Uploading & Indexing...";
-            status.className = "mt-2 text-center text-xs text-indigo-600 animate-pulse";
+            status.innerHTML = '<span class="text-indigo-600 animate-pulse"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Indexing...</span>';
 
-            const formData = new FormData();
-            formData.append('file', file);
+            const fd = new FormData(); fd.append('file', file);
 
             try {
-                const response = await fetch('/upload', { method: 'POST', body: formData });
-                const result = await response.json();
-
-                if (response.ok) {
-                    status.textContent = "✅ Indexed Successfully!";
-                    status.className = "mt-2 text-center text-xs text-green-600";
-                    addFileToList(file.name, result.chunks);
-                    updateStats(1, result.chunks);
-                    document.getElementById('user-input').disabled = false;
-                    document.getElementById('send-btn').disabled = false;
+                const res = await fetch('/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok) {
+                    status.innerHTML = '<span class="text-green-600"><i class="fa-solid fa-check-circle mr-1"></i> Done!</span>';
+                    fetchDocuments();
                 } else {
-                    status.textContent = "❌ Error: " + result.error;
-                    status.className = "mt-2 text-center text-xs text-red-600";
+                    status.innerHTML = `<span class="text-red-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${data.error}</span>`;
                 }
-            } catch (error) {
-                console.error(error);
-                status.textContent = "❌ Network Error";
+            } catch (e) {
+                status.innerHTML = '<span class="text-red-500">Network Error</span>';
             }
-        }
-
-        function addFileToList(filename, chunks) {
-            const list = document.getElementById('file-list');
-            const li = document.createElement('li');
-            li.className = "flex items-center gap-2 text-sm text-gray-700 bg-white p-2 rounded shadow-sm border border-gray-100 hover:shadow-md transition";
-            li.innerHTML = `
-                <i class="fa-solid fa-file-pdf text-red-500"></i> 
-                <div class="flex-1 min-w-0">
-                    <p class="truncate font-medium">${filename}</p>
-                    <p class="text-xs text-gray-400">${chunks} Data Chunks</p>
-                </div>
-            `;
-            list.appendChild(li);
-        }
-
-        function updateStats(newDocs, newChunks) {
-            totalDocs += newDocs;
-            totalChunks += newChunks;
-            document.getElementById('stats-display').innerText = `Docs: ${totalDocs} | Chunks: ${totalChunks}`;
         }
 
         async function sendMessage(e) {
             e.preventDefault();
             const input = document.getElementById('user-input');
-            const message = input.value.trim();
-            if (!message) return;
+            const msg = input.value.trim();
+            if (!msg) return;
 
-            addMessage(message, 'user');
+            hideWelcome();
+            addMessage(msg, 'user');
             input.value = '';
 
-            const loadingId = addMessage('<span class="animate-pulse">Thinking...</span>', 'ai', true);
+            const loadingId = addMessage('Thinking...', 'ai', true);
 
             try {
-                const response = await fetch('/chat', {
+                const res = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ message: msg })
                 });
-                const data = await response.json();
-
+                const data = await res.json();
                 document.getElementById(loadingId).remove();
 
-                if (response.ok) {
+                if (res.ok) {
                     addMessage(data.answer, 'ai', false, data.context);
                 } else {
-                    addMessage("Sorry, I encountered an error.", 'ai');
+                    addMessage("Sorry, something went wrong.", 'ai');
                 }
-            } catch (error) {
+            } catch (e) {
                 document.getElementById(loadingId).remove();
                 addMessage("Network connection failed.", 'ai');
             }
         }
 
-        function addMessage(text, sender, isLoading = false, citations = []) {
-            const history = document.getElementById('chat-history');
+        function addMessage(text, role, isLoading = false, citations = []) {
+            const box = document.getElementById('chat-history');
             const div = document.createElement('div');
             div.id = isLoading ? 'loading-msg' : `msg-${Date.now()}`;
-            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            div.className = `flex w-full mb-6 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
 
-            let contentHtml = text;
-            // Only parse markdown for AI responses to handle lists/code properly
-            if (sender === 'ai' && !isLoading) {
-                contentHtml = marked.parse(text);
-            }
+            // Content
+            let content = text;
+            if (role === 'ai' && !isLoading) content = marked.parse(text);
+            if (isLoading) content = `<div class="flex items-center gap-2"><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-75"></div><div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-150"></div></div>`;
 
-            let citationHtml = '';
+            // Citations
+            let citHtml = '';
             if (citations && citations.length > 0) {
-                citationHtml = `<div class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
-                    <p class="font-bold mb-2 uppercase tracking-wide text-gray-400">Sources & Evidence</p>
-                    <ul class="space-y-1">
-                        ${citations.map(c => `
-                            <li class="flex items-start gap-2">
-                                <i class="fa-solid fa-quote-right text-indigo-300 mt-1"></i>
-                                <span>${c.source} <span class="bg-gray-100 text-gray-600 px-1 rounded ml-1">Page ${c.page}</span></span>
-                            </li>`).join('')}
-                    </ul>
-                </div>`;
+                citHtml = `
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sources</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${citations.map(c => `
+                                <div class="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded border border-indigo-100 flex items-center gap-1" title="${c.content || ''}">
+                                    <i class="fa-regular fa-file-pdf"></i>
+                                    <span class="max-w-[150px] truncate block">${c.source}</span>
+                                    <span class="bg-white px-1 rounded text-[10px] text-slate-500 border border-slate-100">p.${c.page}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
-            const bubbleClass = sender === 'user'
-                ? 'bg-indigo-600 text-white rounded-br-none'
-                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none';
+            const bubbleClass = role === 'user'
+                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl rounded-tr-sm shadow-md shadow-indigo-200'
+                : 'bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm shadow-sm';
 
-            // Add 'prose' class to enable Tailwind Typography for AI messages
             div.innerHTML = `
-                <div class="${bubbleClass} p-5 rounded-2xl shadow-sm message-bubble text-sm ${sender === 'ai' ? 'prose markdown-body' : ''}">
-                    ${contentHtml}
-                    ${citationHtml}
+                <div class="${role === 'user' ? 'max-w-[85%]' : 'max-w-[90%] md:max-w-[80%]'} flex gap-3 ${role === 'user' ? 'flex-row-reverse' : ''} group">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${role === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-md'} mt-auto">
+                        <i class="fa-solid ${role === 'user' ? 'fa-user' : 'fa-robot'} text-xs"></i>
+                    </div>
+                    
+                    <!-- Bubble -->
+                    <div class="${bubbleClass} p-4 md:p-5 text-sm leading-relaxed overflow-hidden ${role === 'ai' ? 'prose prose-indigo max-w-none' : ''}">
+                        ${content}
+                        ${citHtml}
+                    </div>
+                    
+                    <!-- Timestamp/Action (Hidden by default, show on hover?) -->
+                    <!-- Removed for simplicity -->
                 </div>
             `;
 
-            history.appendChild(div);
-            // Trigger MathJax typeset after adding message
-            if (window.MathJax) {
-                MathJax.typesetPromise([div]);
-            }
-            history.scrollTop = history.scrollHeight;
+            box.appendChild(div);
+            if (window.MathJax) MathJax.typesetPromise([div]);
+            box.scrollTop = box.scrollHeight;
             return div.id;
         }
     </script>
