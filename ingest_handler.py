@@ -1,20 +1,19 @@
 
 import os
 import shutil
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_astradb import AstraDBVectorStore
-from langchain_openai import OpenAIEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 
 # Reuse existing functions from utils/ingest
 from utils import get_llm
 
 def get_embeddings():
+    # Force OpenAI/BytePlus or other lightweight API embeddings for Vercel
     if os.getenv("OPENAI_API_KEY"):
         return OpenAIEmbeddings(model="text-embedding-3-small")
     else:
-        return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        # Fallback to None or raise error if no API key, preventing heavy local model load
+        raise ValueError("OPENAI_API_KEY is required for Vercel deployment to avoid heavy local dependencies.")
 
 def ingest_file(file_path, user_id, original_filename):
     """
@@ -23,7 +22,8 @@ def ingest_file(file_path, user_id, original_filename):
     print(f"📄 Processing {original_filename} for User: {user_id}")
     
     # 1. Load
-    loader = PyMuPDFLoader(file_path)
+    # Switched to PyPDFLoader (pypdf) which is lighter than PyMuPDF
+    loader = PyPDFLoader(file_path)
     documents = loader.load()
     
     # 2. Add Metadata

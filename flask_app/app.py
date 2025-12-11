@@ -15,7 +15,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_astradb import AstraDBVectorStore
 from langchain_openai import OpenAIEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings # Removed for Vercel
 
 # Local Imports
 import sys
@@ -64,7 +64,8 @@ def get_astradb_retriever(user_id):
     if os.getenv("OPENAI_API_KEY"):
         embedding = OpenAIEmbeddings(model="text-embedding-3-small")
     else:
-        embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        # embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        raise ValueError("OPENAI_API_KEY required for Vercel.")
 
     vstore = AstraDBVectorStore(
         embedding=embedding,
