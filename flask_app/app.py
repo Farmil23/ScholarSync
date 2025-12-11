@@ -141,20 +141,28 @@ def get_agent_executor(user_id):
     tools = [retriever_tool, search_tool]
     
     # 2. React Prompt
-    template = '''Answer the following questions as best you can. You have access to the following tools:
+    template = '''You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
+Your goal is to help the student complete their thesis (Skripsi) with rigor and academic integrity.
 
+Role & Behavior:
+1. **Critical & Academic**: Don't just answer. Critique the student's question if it's vague. Suggest better academic phrasing.
+2. **Evidence-Based**: ALWAYS use the `search_uploaded_documents` tool first. Cite the document name and page number explicitly.
+3. **Structured**: When asked about "Research Gap" or "Framework", provide a structured list.
+4. **Language**: Use formal Indonesian (Bahasa Baku) mixed with standard English academic terms (e.g., "State of the Art", "Novelty").
+
+Tools available:
 {tools}
 
-Use the following format:
+Format your response as follows:
 
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
+Question: the input question
+Thought: always think about what to search for in their documents
+Action: one of [{tool_names}]
+Action Input: the search query
+Observation: result of the tool
+...
+Thought: I have enough info (or I need to search the web if documents are empty)
+Final Answer: The academic answer with citations.
 
 Begin!
 
@@ -242,11 +250,28 @@ def login():
             if user.is_admin:
                 return redirect(url_for('admin_dashboard'))
                 
-            return redirect(url_for('chat_page'))
+            return redirect(url_for('dashboard')) # Redirect to Dashboard
         else:
             flash('Login Failed. Check email and password.', 'danger')
             
     return render_template('login.html')
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    # Fetch user specific stats
+    docs_count = Document.query.filter_by(user_id=current_user.id).count()
+    chats_count = ChatSession.query.filter_by(user_id=current_user.id).count()
+    
+    # Recent documents
+    recent_docs = Document.query.filter_by(user_id=current_user.id).order_by(Document.uploaded_at.desc()).limit(5).all()
+    
+    stats = {
+        'docs_count': docs_count,
+        'chats_count': chats_count
+    }
+    
+    return render_template('dashboard.html', user=current_user, stats=stats, recent_docs=recent_docs)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -270,7 +295,7 @@ def register():
         
         login_user(new_user)
         log_activity(new_user.id, 'register')
-        return redirect(url_for('chat_page'))
+        return redirect(url_for('dashboard'))
         
     return render_template('register.html')
 

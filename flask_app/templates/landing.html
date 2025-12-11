@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScholarSync - Professional Document Analysis</title>
+    <title>SkripsiSync - Asisten Skripsi & Jurnal AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -29,6 +29,12 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
         }
+
+        .accent-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
 
@@ -44,18 +50,19 @@
                         <i class="fa-solid fa-graduation-cap text-lg"></i>
                     </div>
                     <span
-                        class="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">ScholarSync</span>
+                        class="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">SkripsiSync</span>
                 </div>
                 <div class="hidden md:flex items-center space-x-6">
                     {% if current_user.is_authenticated %}
-                    <a href="/chat" class="text-slate-600 hover:text-indigo-600 font-medium transition">Dashboard</a>
+                    <a href="/dashboard"
+                        class="text-slate-600 hover:text-indigo-600 font-medium transition">Dashboard</a>
                     <a href="/logout"
                         class="px-5 py-2.5 rounded-full bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Logout</a>
                     {% else %}
-                    <a href="/login" class="text-slate-600 hover:text-indigo-600 font-medium transition px-4">Log in</a>
+                    <a href="/login" class="text-slate-600 hover:text-indigo-600 font-medium transition px-4">Masuk</a>
                     <a href="/register"
-                        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-105 transition transform">Get
-                        Started</a>
+                        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-105 transition transform">Daftar
+                        Gratis</a>
                     {% endif %}
                 </div>
                 <!-- Mobile Menu Icon (Placeholder) -->
@@ -80,30 +87,28 @@
             <div
                 class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-wide mb-6">
                 <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                Now with BytePlus AI
+                Partner Resmi Pejuang Skripsi
             </div>
 
             <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
-                Chat with your <br />
-                <span
-                    class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 animate-gradient">Research
-                    Library</span>
+                Selesaikan Skripsi <br />
+                <span class="accent-text animate-gradient">10x Lebih Cepat</span>
             </h1>
 
             <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-slate-500 leading-relaxed">
-                Transform static PDFs into an interactive knowledge base.
-                Experience <span class="font-semibold text-slate-700">RAG-powered analysis</span> with citation-backed
-                answers.
+                Bingung cari Research Gap? Pusing menyusun Kerangka Teori?
+                Upload jurnal referensimu, dan biarkan <span class="font-bold text-slate-800">Dosen AI</span> kami
+                menuntunmu hingga Bab terakhir.
             </p>
 
             <div class="mt-10 flex justify-center gap-4">
                 <a href="/chat"
                     class="px-8 py-4 rounded-full bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition shadow-xl hover:shadow-2xl hover:-translate-y-1 transform">
-                    Start Analyzing <i class="fa-solid fa-arrow-right ml-2 opacity-70"></i>
+                    Mulai Konsultasi <i class="fa-solid fa-arrow-right ml-2 opacity-70"></i>
                 </a>
                 <a href="#features"
                     class="px-8 py-4 rounded-full bg-white text-slate-700 font-bold text-lg border border-slate-200 hover:bg-slate-50 transition shadow-sm hover:shadow-md">
-                    How it works
+                    Cara Kerja
                 </a>
             </div>
 
@@ -113,14 +118,10 @@
                 <div
                     class="rounded-xl overflow-hidden bg-slate-50 aspect-[16/9] flex items-center justify-center border border-slate-100 relative group">
                     <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
-                    <img src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=2000&q=80"
-                        alt="Dashboard Preview"
-                        class="object-cover w-full h-full opacity-90 group-hover:scale-105 transition duration-700">
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div
-                            class="bg-white/90 backdrop-blur px-6 py-3 rounded-full shadow-lg text-indigo-600 font-bold flex items-center gap-3">
-                            <i class="fa-solid fa-play"></i> Watch Demo
-                        </div>
+                    <!-- Placeholder UI image mimicking the dashboard -->
+                    <div class="text-center">
+                        <i class="fa-solid fa-laptop-code text-6xl text-indigo-200 mb-4"></i>
+                        <p class="text-slate-400 font-medium">Dashboard Konsultasi Modern</p>
                     </div>
                 </div>
             </div>
@@ -131,8 +132,8 @@
     <div id="features" class="py-24 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold text-slate-900">Why Top Researchers Choose ScholarSync</h2>
-                <p class="mt-4 text-slate-500">Built for precision, designed for clarity.</p>
+                <h2 class="text-3xl font-bold text-slate-900">Kenapa SkripsiSync?</h2>
+                <p class="mt-4 text-slate-500">Dibuat khusus untuk mahasiswa tingkat akhir yang butuh kepastian.</p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
@@ -140,12 +141,12 @@
                 <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300">
                     <div
                         class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-Magnifying-glass"></i>
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Hybrid Search</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Cari Research Gap</h3>
                     <p class="text-slate-500 leading-relaxed">
-                        Don't miss a keyword. We combine Vector Search (semantic) with Keyword Search (exact) for 99%
-                        retrieval accuracy.
+                        Upload 5-10 jurnal, AI akan menganalisis celah penelitian yang belum dibahas orang lain. Judulmu
+                        pasti unik!
                     </p>
                 </div>
 
@@ -154,12 +155,11 @@
                     class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300 border-indigo-100 ring-2 ring-indigo-50/50">
                     <div
                         class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-brain"></i>
+                        <i class="fa-solid fa-user-graduate"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Context Aware</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Konsultasi 24/7</h3>
                     <p class="text-slate-500 leading-relaxed">
-                        ScholarSync remembers previous questions in the session (Memory), allowing for natural follow-up
-                        conversations.
+                        Tak perlu menunggu dosen pembimbing. Tanyakan metodologi, teori, atau revisi kalimat kapan saja.
                     </p>
                 </div>
 
@@ -167,11 +167,12 @@
                 <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-transform duration-300">
                     <div
                         class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-shield-halved"></i>
+                        <i class="fa-solid fa-quote-right"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Enterprise Secure</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Referensi Valid</h3>
                     <p class="text-slate-500 leading-relaxed">
-                        Your research data sits in DataStax Astra DB with strict isolation. We don't train on your data.
+                        Setiap jawaban dilengkapi sitasi ke halaman dokumen aslinya. Anti-halusinasi, aman untuk daftar
+                        pustaka.
                     </p>
                 </div>
             </div>
@@ -183,13 +184,12 @@
         <div class="max-w-7xl mx-auto px-4 text-center">
             <div class="flex justify-center items-center gap-2 mb-6">
                 <i class="fa-solid fa-graduation-cap text-indigo-600 text-xl"></i>
-                <span class="font-bold text-xl text-slate-800">ScholarSync</span>
+                <span class="font-bold text-xl text-slate-800">SkripsiSync</span>
             </div>
-            <p class="text-slate-400 mb-8 max-w-md mx-auto">Empowering the next generation of researchers with AI-driven
-                insights.</p>
+            <p class="text-slate-400 mb-8 max-w-md mx-auto">Membantu mahasiswa lulus tepat waktu dengan teknologi AI
+                tercanggih.</p>
             <div class="text-sm text-slate-400">
-                &copy; 2024 ScholarSync. Built with <i class="fa-solid fa-heart text-red-400"></i> using BytePlus &
-                Astra DB.
+                &copy; 2024 SkripsiSync. Built with <i class="fa-solid fa-heart text-red-400"></i> by Farhan Kamil.
             </div>
         </div>
     </footer>
