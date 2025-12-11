@@ -99,12 +99,17 @@
     <!-- UI Mockup -->
     <section class="max-w-6xl mx-auto px-4 mb-24 relative z-10">
         <div class="glass-nav rounded-2xl border border-slate-200 p-2 shadow-2xl shadow-indigo-100">
-            <div class="bg-slate-50 rounded-xl overflow-hidden aspect-[16/9] relative flex items-center justify-center">
-                <div class="text-center">
-                    <i class="fa-solid fa-laptop-code text-6xl text-indigo-200 mb-4"></i>
-                    <p class="text-indigo-300 font-bold">Dashboard Konsultasi Modern</p>
+            <div
+                class="bg-slate-50 rounded-xl overflow-hidden aspect-[16/9] relative flex items-center justify-center group">
+                <img src="/static/img/dashboard_mockup.png" alt="Dashboard Preview"
+                    class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700">
+                <!-- Overlay Play Button (Optional visual flair) -->
+                <div
+                    class="absolute inset-0 bg-indigo-900/10 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
+                    <span
+                        class="px-6 py-2 bg-white/90 backdrop-blur rounded-full text-indigo-900 font-bold text-sm shadow-xl transform translate-y-4 group-hover:translate-y-0 transition">Lihat
+                        Demo</span>
                 </div>
-                <!-- You can replace this inner div with an <img> tag later -->
             </div>
         </div>
         <!-- Decorative blobs -->

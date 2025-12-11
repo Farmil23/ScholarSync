@@ -1,58 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ScholarSync</title>
+    <title>Masuk - SkripsiSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #ffffff 50%, #f5f3ff 100%);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 h-screen">
+<body class="flex items-center justify-center min-h-screen px-4">
 
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-            Or <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500">start your 14-day free
-                trial</a>
-        </p>
-    </div>
+    <div class="w-full max-w-lg">
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div
+                class="mx-auto h-16 w-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 mb-4">
+                <i class="fa-solid fa-graduation-cap text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Selamat Datang Kembali!</h2>
+            <p class="mt-2 text-slate-500">Lanjutkan progres skripsimu hari ini.</p>
+        </div>
+
+        <!-- Card -->
+        <div
+            class="bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl p-8 md:p-10 shadow-2xl shadow-indigo-100 relative overflow-hidden">
+
+            <!-- Blob effect -->
+            <div
+                class="absolute -top-20 -right-20 w-40 h-40 bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none">
+            </div>
+            <div
+                class="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none">
+            </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            {% for category, message in messages %}
-            <div class="mb-4 text-sm text-{{ 'red-600' if category == 'danger' else 'green-600' }}">{{ message }}</div>
-            {% endfor %}
+            <div class="mb-6 space-y-2 relative z-10">
+                {% for category, message in messages %}
+                <div
+                    class="p-4 rounded-xl text-sm font-medium {{ 'bg-red-50 text-red-600 border border-red-100' if category == 'danger' else 'bg-green-50 text-green-600 border border-green-100' }}">
+                    <i class="fa-solid fa-circle-info mr-2"></i> {{ message }}
+                </div>
+                {% endfor %}
+            </div>
             {% endif %}
             {% endwith %}
 
-            <form class="space-y-6" action="/login" method="POST">
+            <form action="/login" method="POST" class="space-y-6 relative z-10">
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
-                    <div class="mt-1">
-                        <input id="email" name="email" type="email" autocomplete="email" required
-                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Email Kampus /
+                        Pribadi</label>
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <input id="email" name="email" type="email" required
+                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+                            placeholder="nama@mahasiswa.ac.id">
                     </div>
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <div class="mt-1">
-                        <input id="password" name="password" type="password" autocomplete="current-password" required
-                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="password" class="block text-sm font-bold text-slate-700">Password</label>
+                        <a href="#" class="text-xs font-bold text-indigo-600 hover:text-indigo-500">Lupa password?</a>
+                    </div>
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <input id="password" name="password" type="password" required
+                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+                            placeholder="••••••••">
                     </div>
                 </div>
 
-                <div>
-                    <button type="submit"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Sign in
-                    </button>
-                </div>
+                <button type="submit"
+                    class="w-full py-4 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] transition-all transform flex items-center justify-center gap-2">
+                    Masuk Sekarang <i class="fa-solid fa-arrow-right"></i>
+                </button>
             </form>
+
+            <div class="mt-8 text-center relative z-10">
+                <p class="text-sm text-slate-500">
+                    Belum punya akun?
+                    <a href="/register" class="font-bold text-indigo-600 hover:text-indigo-500 transition">Daftar
+                        Gratis</a>
+                </p>
+            </div>
         </div>
     </div>
 </body>

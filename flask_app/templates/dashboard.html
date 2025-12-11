@@ -86,27 +86,92 @@
             </button>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="grid md:grid-cols-3 gap-6 mb-10">
+        <!-- Stats & Roadmap Grid -->
+        <div class="grid md:grid-cols-4 gap-6 mb-10">
+            <!-- Stats 1 -->
             <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
                     <i class="fa-solid fa-book text-6xl text-indigo-600"></i>
                 </div>
-                <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Referensi</p>
-                <h2 class="text-4xl font-bold text-slate-800 mt-2">{{ stats.docs_count }}</h2>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Referensi</p>
+                <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.docs_count }}</h2>
+                <p class="text-[10px] text-green-500 font-bold mt-1"><i class="fa-solid fa-arrow-up"></i> Terus
+                    bertambah!</p>
             </div>
+
+            <!-- Stats 2 -->
             <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-comment-dots text-6xl text-purple-600"></i>
+                    <i class="fa-solid fa-comments text-6xl text-purple-600"></i>
                 </div>
-                <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Sesi Bimbingan</p>
-                <h2 class="text-4xl font-bold text-slate-800 mt-2">{{ stats.chats_count }}</h2>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Konsultasi</p>
+                <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.chats_count }}</h2>
+                <p class="text-[10px] text-indigo-500 font-bold mt-1">Sesi aktif</p>
             </div>
-            <div
-                class="glass-card p-6 rounded-2xl bg-indigo-50/50 border-indigo-100 flex flex-col justify-center text-center">
-                <p class="text-sm text-indigo-800 font-bold mb-2">Tips Hari Ini</p>
-                <p class="text-xs text-slate-600">"Jangan Lupa simpan sitasi setiap kali menemukan referensi penting."
-                </p>
+
+            <!-- Thesis Roadmap Progress (Visual) -->
+            <div class="glass-card p-6 rounded-2xl md:col-span-2 flex flex-col justify-center relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4 z-10">
+                    <h3 class="font-bold text-slate-800">Progress Skripsi</h3>
+                    <span class="text-xs font-bold bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">On Track</span>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 mb-4">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
+                            style="width: 45%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                        <span class="text-indigo-600">Judul</span>
+                        <span class="text-indigo-600">Bab 1</span>
+                        <span class="text-purple-600">Bab 2</span>
+                        <span>Bab 3</span>
+                        <span>Sidang</span>
+                    </div>
+                </div>
+
+                <!-- Background decoration -->
+                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-50">
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadline & Motivation Row -->
+        <div class="grid md:grid-cols-3 gap-6 mb-10">
+            <div class="glass-card p-5 rounded-xl border-l-4 border-yellow-400 bg-yellow-50/20">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="bg-yellow-100 text-yellow-600 h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Target Minggu Ini</h4>
+                        <p class="text-xs text-slate-500 mt-1">Selesaikan Revisi Bab 2 (Teori) sebelum bimbingan Jumat.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-xl border-l-4 border-emerald-400 bg-emerald-50/20">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="bg-emerald-100 text-emerald-600 h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Status Dokumen</h4>
+                        <p class="text-xs text-slate-500 mt-1">Semua referensi telah terindeks dan siap dianalisis AI.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-xl border-l-4 border-blue-400 bg-blue-50/20 flex items-center">
+                <div>
+                    <p class="text-xs font-bold text-blue-500 uppercase mb-1">Tips Hari Ini</p>
+                    <p class="text-xs text-slate-600 italic">"Skripsi yang baik adalah skripsi yang selesai. Jangan
+                        perfeksionis di draft pertama!"</p>
+                </div>
             </div>
         </div>
 
