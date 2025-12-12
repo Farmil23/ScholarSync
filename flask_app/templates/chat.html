@@ -38,6 +38,8 @@
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
 
+
+
         /* Glassmorphism */
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -98,6 +100,49 @@
 
         .sidebar-closed {
             transform: translateX(-100%);
+        }
+
+        /* Custom Scrollbar - Premium Look */
+        .custom-scrollbar::-webkit-scrollbar,
+        pre::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track,
+        pre::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb,
+        pre::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            /* Indigo-500 with opacity */
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(79, 70, 229, 0.8);
+            /* Indigo-600 */
+        }
+
+        /* Scrollbar for dark mode */
+        .dark .custom-scrollbar::-webkit-scrollbar-track,
+        .dark pre::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb,
+        .dark pre::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        .dark pre::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
 
         /* Checkbox Custom Style (optional if needed) */
