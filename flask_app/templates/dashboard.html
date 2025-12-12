@@ -422,6 +422,120 @@
             </div>
         </div>
 
+        <!-- New Project Modal -->
+        <div id="project-modal"
+            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+            <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+            <div
+                class="modal-container bg-white dark:bg-slate-800 w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-100 duration-300">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ t('modal_new_project') }}</h3>
+                        <button onclick="toggleModal('project-modal')" class="text-slate-400 hover:text-slate-600"><i
+                                class="fa-solid fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="createProject(event)">
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{
+                                t('project_name_label') }}</label>
+                            <input type="text" id="project-title"
+                                class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                placeholder="{{ t('project_name_placeholder') }}" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{
+                                t('select_refs') }}</label>
+                            <div
+                                class="max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-xl p-2 bg-slate-50 dark:bg-slate-900 custom-scrollbar">
+                                {% if all_docs %}
+                                {% for doc in all_docs %}
+                                <label
+                                    class="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                                    <input type="checkbox" name="doc_ids" value="{{ doc.id }}"
+                                        class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{{
+                                            doc.filename }}</p>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                                {% else %}
+                                <p class="text-xs text-slate-400 p-2 text-center">{{ t('no_docs') }}</p>
+                                {% endif %}
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> {{
+                                t('ai_note') }}</p>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="toggleModal('project-modal')"
+                                class="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition">{{
+                                t('cancel') }}</button>
+                            <button type="submit"
+                                class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">{{ t('create')
+                                }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Modal -->
+        <div id="upload-modal"
+            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+            <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+            <div
+                class="modal-container bg-white dark:bg-slate-800 w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-100 duration-300">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ t('upload_ref') }}</h3>
+                        <button onclick="toggleModal('upload-modal')" class="text-slate-400 hover:text-slate-600"><i
+                                class="fa-solid fa-times text-xl"></i></button>
+                    </div>
+
+                    <div id="upload-progress"
+                        class="hidden mb-6 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                        <div class="flex justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+                            <span>{{ t('processing') }}</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-2">
+                            <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                                style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 text-center">{{ t('reading_doc') }}</p>
+                    </div>
+
+                    <form onsubmit="uploadDocument(event)">
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{
+                                t('select_pdf') }}</label>
+                            <div
+                                class="relative border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900 transition cursor-pointer group">
+                                <input type="file" id="file-upload"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf"
+                                    required>
+                                <div class="space-y-2 pointer-events-none">
+                                    <i
+                                        class="fa-solid fa-cloud-arrow-up text-4xl text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition"></i>
+                                    <p id="file-label" class="text-sm font-medium text-slate-500 dark:text-slate-400">{{
+                                        t('drag_drop') }}</p>
+                                    <p class="text-xs text-slate-400">{{ t('pdf_only') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="toggleModal('upload-modal')"
+                                class="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition">{{
+                                t('cancel') }}</button>
+                            <button type="submit" id="btn-upload"
+                                class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">{{ t('upload')
+                                }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Rename Document Modal (NEW) -->
         <div id="rename-modal"
             class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
