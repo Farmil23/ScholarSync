@@ -501,14 +501,42 @@
                 thinkingDiv.remove();
 
                 // Create placeholder for AI response
-                // We use appendMessage but with empty text to get the DOM element
                 const msgDiv = appendMessage('ai', '');
-                // Find the content container (.prose)
-                const contentDiv = msgDiv.querySelector('.prose');
+
+                // Structure: 
+                // msgDiv -> [Avatar, ContentWrapper]
+                // ContentWrapper -> [Name, ThinkingContainer, Bubble, Citations]
+
+                const contentWrapper = msgDiv.querySelector('.max-w-\\[85\\%\\]') || msgDiv.querySelector('.max-w-\\[75\\%\\]');
+                const bubble = msgDiv.querySelector('.prose'); // The main bubble
+
+                // 1. Insert Thinking Container (Initially Hidden/Empty)
+                const thinkingContainer = document.createElement('div');
+                thinkingContainer.className = "mb-2 text-xs text-slate-400 dark:text-slate-500 font-mono hidden";
+                thinkingContainer.innerHTML = `
+                    <details class="group/think">
+                        <summary class="cursor-pointer hover:text-indigo-500 transition select-none flex items-center gap-2">
+                            <i class="fa-solid fa-brain text-[10px]"></i> 
+                            <span>Thinking Process...</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] transform group-open/think:rotate-180 transition-transform"></i>
+                        </summary>
+                        <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700 whitespace-pre-wrap leading-relaxed" id="thinking-content-${Date.now()}"></div>
+                    </details>
+                `;
+
+                if (contentWrapper && contentWrapper.children.length >= 2) {
+                    // Insert after name (0), before bubble (1)
+                    contentWrapper.insertBefore(thinkingContainer, contentWrapper.children[1]);
+                }
+
+                const thinkingContent = thinkingContainer.querySelector('div[id^="thinking-content"]');
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let fullText = "";
+                let isThinking = true; // Start in thinking mode (ReAct pattern)
+                let currentThinkingText = "";
+                let currentAnswerText = "";
+
                 let buffer = "";
 
                 while (true) {
@@ -531,13 +559,45 @@
                                 const data = JSON.parse(jsonStr);
 
                                 if (data.token) {
-                                    fullText += data.token;
-                                    // Live Render Markdown
-                                    contentDiv.innerHTML = marked.parse(fullText);
-                                    historyContainer.scrollTop = historyContainer.scrollHeight;
+                                    const token = data.token;
+
+                                    if (isThinking) {
+                                        currentThinkingText += token;
+
+                                        // Update UI
+                                        thinkingContainer.classList.remove('hidden');
+                                        thinkingContent.textContent = currentThinkingText; // Raw text for thoughts
+
+                                        // Check for "Final Answer:"
+                                        // We look for the pattern. Case insensitive? Usually it's "Final Answer:" capitalized by LangChain.
+                                        const terminator = "Final Answer:";
+                                        const index = currentThinkingText.indexOf(terminator);
+
+                                        if (index !== -1) {
+                                            isThinking = false;
+
+                                            // Split!
+                                            // Everything BEFORE terminator stays in thinking
+                                            const realThinking = currentThinkingText.substring(0, index).trim();
+                                            thinkingContent.textContent = realThinking;
+
+                                            // Everything AFTER terminator goes to answer
+                                            // Remove the terminator itself
+                                            const remaining = currentThinkingText.substring(index + terminator.length);
+                                            currentAnswerText += remaining;
+
+                                            // Update main bubble
+                                            bubble.innerHTML = marked.parse(currentAnswerText);
+                                        }
+                                    } else {
+                                        // Direct to answer
+                                        currentAnswerText += token;
+                                        bubble.innerHTML = marked.parse(currentAnswerText);
+                                        historyContainer.scrollTop = historyContainer.scrollHeight;
+                                    }
+
                                 } else if (data.error) {
-                                    fullText += "\n\n*Error: " + data.error + "*";
-                                    contentDiv.innerHTML = marked.parse(fullText);
+                                    bubble.innerHTML += `\n\n*Error: ${data.error}*`;
                                 } else if (data.done) {
                                     // Finished
                                     // Process Citations (make [[...]] clickable)
