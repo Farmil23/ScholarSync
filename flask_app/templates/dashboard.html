@@ -205,7 +205,7 @@
         </div>
 
         <!-- Stats & Roadmap Grid -->
-        <div class="grid md:grid-cols-4 gap-6 mb-10">
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
             <!-- Stats 1 -->
             <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
@@ -273,42 +273,25 @@
             </div>
         </div>
 
-        <!-- Deadline & Motivation Row -->
-        <div class="grid md:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-5 rounded-xl border-l-4 border-yellow-400 bg-yellow-50/20">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="bg-yellow-100 text-yellow-600 h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fa-regular fa-calendar-check"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">Target Minggu Ini</h4>
-                        <p class="text-xs text-slate-500 mt-1">Selesaikan Revisi Bab 2 (Teori) sebelum bimbingan Jumat.
-                        </p>
-                    </div>
-                </div>
+        <!-- Utility Bar (Search & Filter) -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="dashboard-search" onkeyup="filterDashboard()"
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-medium glass-card"
+                    placeholder="Cari proyek atau dokumen...">
             </div>
-
-            <div class="glass-card p-5 rounded-xl border-l-4 border-emerald-400 bg-emerald-50/20">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="bg-emerald-100 text-emerald-600 h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-check-double"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">Status Dokumen</h4>
-                        <p class="text-xs text-slate-500 mt-1">Semua referensi telah terindeks dan siap dianalisis AI.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card p-5 rounded-xl border-l-4 border-blue-400 bg-blue-50/20 flex items-center">
-                <div>
-                    <p class="text-xs font-bold text-blue-500 uppercase mb-1">Tips Hari Ini</p>
-                    <p class="text-xs text-slate-600 italic">"Skripsi yang baik adalah skripsi yang selesai. Jangan
-                        perfeksionis di draft pertama!"</p>
-                </div>
+            <div class="flex gap-2">
+                <select id="sort-select" onchange="sortItems()"
+                    class="px-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-600 glass-card cursor-pointer">
+                    <option value="newest">Terbaru</option>
+                    <option value="oldest">Terlama</option>
+                    <option value="name">Nama (A-Z)</option>
+                </select>
+                <button onclick="toggleModal('upload-modal')"
+                    class="bg-white text-indigo-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">Upload</span>
+                </button>
             </div>
         </div>
 
@@ -321,75 +304,95 @@
                     </h3>
                 </div>
 
-                {% if recent_sessions %}
-                <div class="grid gap-4">
+                <div id="projects-container" class="grid gap-4">
+                    {% if recent_sessions %}
                     {% for session in recent_sessions %}
                     <div onclick="openSession({{ session.id }})"
-                        class="glass-card p-5 rounded-xl hover:bg-white hover:shadow-lg transition cursor-pointer border-l-4 border-indigo-500 group">
+                        class="searchable-item glass-card p-5 rounded-xl hover:bg-white hover:shadow-lg transition cursor-pointer border-l-4 border-indigo-500 group"
+                        data-name="{{ session.title|lower }}" data-date="{{ session.created_at.timestamp() }}">
                         <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition">{{
+                            <div class="flex-1 min-w-0 pr-4">
+                                <h4
+                                    class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition truncate">
+                                    {{
                                     session.title }}</h4>
                                 <p class="text-xs text-slate-500 mt-1">Dibuat {{ session.created_at.strftime('%d %b %Y')
                                     }}</p>
                             </div>
-                            <div class="bg-indigo-50 text-indigo-600 text-xs px-3 py-1 rounded-full font-medium">
+                            <div
+                                class="bg-indigo-50 text-indigo-600 text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
                                 <i class="fa-solid fa-arrow-right"></i> Lanjut
                             </div>
                         </div>
                     </div>
                     {% endfor %}
+                    {% else %}
+                    <div class="glass-card p-10 text-center rounded-xl border border-dashed border-slate-300">
+                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-4"></i>
+                        <p class="text-slate-500">Belum ada proyek. Mulai konsultasi baru!</p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="glass-card p-10 text-center rounded-xl border border-dashed border-slate-300">
-                    <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-4"></i>
-                    <p class="text-slate-500">Belum ada proyek. Mulai konsultasi baru!</p>
+                <!-- No Results State Project -->
+                <div id="no-projects" class="hidden glass-card p-8 text-center rounded-xl">
+                    <p class="text-slate-500 text-sm">Tidak ada proyek yang cocok.</p>
                 </div>
-                {% endif %}
             </div>
 
             <!-- Recent Documents / Library -->
-            <div>
+            <div class="flex flex-col h-full">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i>
                         Arsip Dokumen</h3>
-                    <button onclick="toggleModal('upload-modal')"
-                        class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-100 transition flex items-center gap-1">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
-                    </button>
                 </div>
-                <!-- glass-card was here before, keeping context clean -->
-                <div class="glass-card rounded-xl overflow-hidden p-2 bg-white/50 max-h-[500px] overflow-y-auto">
-                    {% if all_docs %}
-                    <ul class="space-y-1">
-                        {% for doc in all_docs %}
-                        <li class="p-3 hover:bg-white rounded-lg transition flex items-center gap-3 group relative">
-                            <div
-                                class="h-8 w-8 bg-red-50 text-red-500 rounded flex items-center justify-center flex-shrink-0 text-sm">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </div>
-                            <div class="flex-1 min-w-0 pr-8">
-                                <p id="doc-name-{{ doc.id }}" class="text-xs font-bold text-slate-700 truncate"
-                                    title="{{ doc.filename }}">{{ doc.filename }}</p>
-                                <p class="text-[10px] text-slate-400">{{ doc.uploaded_at.strftime('%d/%m/%Y') }}</p>
-                            </div>
-                            <!-- Actions -->
-                            <div class="absolute right-3 opacity-0 group-hover:opacity-100 flex gap-2 transition">
-                                <button onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
-                                    class="text-slate-400 hover:text-indigo-600 transition" title="Ganti Nama">
-                                    <i class="fa-solid fa-pen text-xs"></i>
-                                </button>
-                                <button onclick="deleteDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
-                                    class="text-slate-400 hover:text-red-600 transition" title="Hapus Dokumen">
-                                    <i class="fa-solid fa-trash text-xs"></i>
-                                </button>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div class="p-4 text-center text-xs text-slate-400">Belum ada dokumen.</div>
-                    {% endif %}
+
+                <div class="glass-card rounded-xl overflow-hidden p-2 bg-white/50 flex-1 min-h-[400px]">
+                    <div class="overflow-y-auto max-h-[600px] h-full pr-1 custom-scrollbar">
+                        {% if all_docs %}
+                        <ul id="documents-list" class="space-y-1">
+                            {% for doc in all_docs %}
+                            <li class="searchable-item p-3 hover:bg-white rounded-lg transition flex items-center gap-3 group relative"
+                                data-name="{{ doc.filename|lower }}" data-date="{{ doc.uploaded_at.timestamp() }}">
+                                <div
+                                    class="h-10 w-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center flex-shrink-0 text-lg shadow-sm">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div class="flex-1 min-w-0 pr-8">
+                                    <p id="doc-name-{{ doc.id }}" class="text-sm font-bold text-slate-700 truncate"
+                                        title="{{ doc.filename }}">{{ doc.filename }}</p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">{{ doc.uploaded_at.strftime('%d/%m/%Y')
+                                        }} • PDF</p>
+                                </div>
+                                <!-- Actions -->
+                                <div
+                                    class="absolute right-3 opacity-0 group-hover:opacity-100 flex gap-2 transition bg-white/80 p-1 rounded-lg backdrop-blur-sm">
+                                    <button
+                                        onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
+                                        class="text-slate-400 hover:text-indigo-600 transition p-1" title="Ganti Nama">
+                                        <i class="fa-solid fa-pen text-xs"></i>
+                                    </button>
+                                    <button
+                                        onclick="deleteDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
+                                        class="text-slate-400 hover:text-red-600 transition p-1" title="Hapus Dokumen">
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <!-- No Results State Docs -->
+                        <div id="no-docs" class="hidden p-8 text-center">
+                            <p class="text-slate-400 text-xs">Tidak ada dokumen yang cocok.</p>
+                        </div>
+                        {% else %}
+                        <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl mb-3 opacity-50"></i>
+                            <p class="text-sm">Belum ada dokumen.</p>
+                            <button onclick="toggleModal('upload-modal')"
+                                class="text-indigo-600 font-bold text-xs mt-2 hover:underline">Upload Sekarang</button>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -573,6 +576,68 @@
             document.body.classList.toggle('modal-active');
         }
 
+        // --- Search Functionality ---
+        function filterDashboard() {
+            const query = document.getElementById('dashboard-search').value.toLowerCase();
+            const items = document.querySelectorAll('.searchable-item');
+
+            let hasProjects = false;
+            let hasDocs = false;
+
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
+                if (name.includes(query)) {
+                    item.classList.remove('hidden');
+                    if (item.closest('#projects-container')) hasProjects = true;
+                    if (item.closest('#documents-list')) hasDocs = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // Handle Empty States
+            const noProjects = document.getElementById('no-projects');
+            const noDocs = document.getElementById('no-docs');
+            const projectsContainer = document.getElementById('projects-container');
+            const docsList = document.getElementById('documents-list');
+
+            if (projectsContainer && projectsContainer.querySelectorAll('.searchable-item').length > 0) {
+                if (noProjects) noProjects.classList.toggle('hidden', hasProjects);
+            }
+            if (docsList && docsList.querySelectorAll('.searchable-item').length > 0) {
+                if (noDocs) noDocs.classList.toggle('hidden', hasDocs);
+            }
+        }
+
+        // --- Sorting Functionality ---
+        function sortItems() {
+            const criteria = document.getElementById('sort-select').value;
+            sortContainer('projects-container', criteria);
+            const docList = document.getElementById('documents-list');
+            if (docList) sortContainer('documents-list', criteria);
+        }
+
+        function sortContainer(containerId, criteria) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const items = Array.from(container.querySelectorAll('.searchable-item'));
+
+            items.sort((a, b) => {
+                const dateA = parseFloat(a.getAttribute('data-date'));
+                const dateB = parseFloat(b.getAttribute('data-date'));
+                const nameA = a.getAttribute('data-name');
+                const nameB = b.getAttribute('data-name');
+
+                if (criteria === 'newest') return dateB - dateA;
+                if (criteria === 'oldest') return dateA - dateB;
+                if (criteria === 'name') return nameA.localeCompare(nameB);
+                return 0;
+            });
+
+            items.forEach(item => container.appendChild(item));
+        }
+
         async function createProject(e) {
             e.preventDefault();
             const title = document.getElementById('project-title').value;
@@ -629,6 +694,10 @@
                     // Update UI
                     const nameEl = document.getElementById(`doc-name-${docId}`);
                     if (nameEl) nameEl.innerText = newName;
+
+                    // Update data-name attribute
+                    const listItem = nameEl.closest('.searchable-item');
+                    if (listItem) listItem.setAttribute('data-name', newName.toLowerCase());
 
                     showToast('Nama dokumen diperbarui!', 'success');
                     toggleModal('rename-modal');
@@ -811,11 +880,13 @@
         function resetUploadUI() {
             const btn = document.getElementById('btn-upload');
             const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('progress-bar');
 
             if (window.uploadInterval) clearInterval(window.uploadInterval);
             btn.disabled = false;
             btn.innerText = "Upload";
             progressDiv.classList.add('hidden');
+            if (progressBar) progressBar.style.width = '0%';
         }
     </script>
 
