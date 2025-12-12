@@ -1,8 +1,9 @@
 
 import os
 import uuid
-import json
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+import csv
+import io
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file, Response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from datetime import datetime
@@ -594,7 +595,49 @@ def admin_dashboard():
         'chat_count': chat_count
     }
     
-    return render_template('admin.html', stats=stats, recent_logs=recent_logs)
+    # Monthly Aggregation (Python-side for DB compatibility)
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    monthly_data = {m: 0 for m in months}
+    current_year = datetime.now().year
+    
+    # Optimization: If many logs, use SQL group_by. For now, simple iteration.
+    all_logs = ActivityLog.query.all()
+    for log in all_logs:
+        if log.timestamp.year == current_year:
+            m_name = log.timestamp.strftime('%b')
+            if m_name in monthly_data:
+                monthly_data[m_name] += 1
+
+    return render_template('admin.html', stats=stats, recent_logs=recent_logs, monthly_data=monthly_data)
+
+@app.route('/admin/export_logs')
+@login_required
+def export_logs():
+    if not current_user.is_admin:
+        return redirect(url_for('dashboard'))
+        
+    logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).all()
+    
+    # Create CSV in memory
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['ID', 'User ID', 'Action', 'Details', 'Timestamp'])
+    
+    for log in logs:
+        cw.writerow([log.id, log.user_id, log.action, log.details, log.timestamp])
+        
+    output = io.BytesIO()
+    output.write(si.getvalue().encode('utf-8'))
+    output.seek(0)
+    
+    filename = f"activity_logs_{datetime.now().strftime('%Y%m%d')}.csv"
+    
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
 
 if __name__ == '__main__':
     with app.app_context():

@@ -7,196 +7,339 @@
     <title>Admin Dashboard - ScholarSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f5f3ff 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-sidebar {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0) 100%);
+            border-left: 3px solid #6366f1;
+        }
+
+        .premium-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transition: all 0.3s ease;
+        }
+
+        .premium-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="text-slate-800 h-screen overflow-hidden flex">
 
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <div class="hidden md:flex md:flex-shrink-0">
-            <div class="flex flex-col w-64 bg-gray-800 text-white">
-                <div class="flex items-center justify-center h-16 bg-gray-900 border-b border-gray-700">
-                    <span class="text-xl font-bold">Admin Panel</span>
-                </div>
-                <div class="flex-1 flex flex-col overflow-y-auto">
-                    <nav class="flex-1 px-2 py-4 space-y-2">
-                        <a href="#"
-                            class="bg-gray-900 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                            <i class="fa-solid fa-chart-line mr-3"></i> Dashboard
-                        </a>
-                        <a href="/"
-                            class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                            <i class="fa-solid fa-house mr-3"></i> Main Site
-                        </a>
-                        <a href="/logout"
-                            class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                            <i class="fa-solid fa-sign-out-alt mr-3"></i> Logout
-                        </a>
-                    </nav>
-                </div>
+    <!-- Sidebar -->
+    <aside class="w-64 glass-sidebar text-white flex-shrink-0 hidden md:flex flex-col transition-all duration-300">
+        <div class="h-20 flex items-center justify-center border-b border-slate-700/50">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-indigo-400 text-2xl"></i>
+                <span class="font-bold text-xl tracking-tight">ScholarSync</span>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col w-0 overflow-hidden">
-            <div class="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
-                <button
-                    class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden">
-                    <span class="sr-only">Open sidebar</span>
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="flex-1 px-4 flex justify-between">
-                    <div class="flex-1 flex"></div>
-                    <div class="ml-4 flex items-center md:ml-6">
-                        <span class="text-gray-600 text-sm mr-4">Welcome, Admin</span>
-                    </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu</p>
+            <a href="#"
+                class="nav-item active flex items-center px-4 py-3 text-sm font-medium rounded-xl text-white transition-all">
+                <i class="fa-solid fa-chart-pie w-6"></i> Dashboard
+            </a>
+            <a href="/" target="_blank"
+                class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                <i class="fa-solid fa-external-link-alt w-6"></i> Live Site
+            </a>
+
+            <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mt-6 mb-2">Account</p>
+            <a href="/logout"
+                class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-400 hover:bg-red-500/10 transition-all">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Logout
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold">
+                    A
+                </div>
+                <div>
+                    <p class="text-sm font-bold">Administrator</p>
+                    <p class="text-xs text-slate-400">Super User</p>
                 </div>
             </div>
+        </div>
+    </aside>
 
-            <main class="flex-1 relative overflow-y-auto focus:outline-none">
-                <div class="py-6">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                        <h1 class="text-2xl font-semibold text-gray-900">Analytics Overview</h1>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Top Bar (Mobile) -->
+        <header class="glass-card md:hidden h-16 flex items-center justify-between px-4 z-20">
+            <span class="font-bold text-lg">Admin Panel</span>
+            <button class="text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </header>
+
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900">Dashboard Overview</h1>
+                        <p class="text-slate-500 mt-1">Real-time statistics and user activity monitoring.</p>
                     </div>
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
+                    <div class="flex gap-3">
+                        <button
+                            class="glass-card px-4 py-2 rounded-xl text-slate-600 font-bold hover:bg-white transition flex items-center gap-2">
+                            <i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filter</span>
+                        </button>
+                        <!-- Export Button Hook -->
+                        <a href="/admin/export_logs"
+                            class="premium-btn text-white px-5 py-2 rounded-xl font-bold shadow-lg flex items-center gap-2 hover:shadow-indigo-500/30">
+                            <i class="fa-solid fa-file-csv"></i> Export Data
+                        </a>
+                    </div>
+                </div>
 
-                        <!-- Stats Cards -->
-                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                            <!-- Users -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
-                                <div class="px-4 py-5 sm:p-6">
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_users }}</dd>
-                                </div>
-                            </div>
-                            <!-- Docs -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
-                                <div class="px-4 py-5 sm:p-6">
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Uploaded Documents</dt>
-                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_docs }}</dd>
-                                </div>
-                            </div>
-                            <!-- Chats -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
-                                <div class="px-4 py-5 sm:p-6">
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Interactions (Chats)
-                                    </dt>
-                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ stats.total_chats }}</dd>
-                                </div>
-                            </div>
-                            <!-- Active Today -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
-                                <div class="px-4 py-5 sm:p-6">
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Actions Today</dt>
-                                    <dd class="mt-1 text-3xl font-semibold text-indigo-600">{{ stats.actions_today }}
-                                    </dd>
-                                </div>
-                            </div>
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Stat 1 -->
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-users text-6xl text-indigo-600"></i>
                         </div>
-
-                        <!-- Charts -->
-                        <!-- HIDDEN DATA CONTAINER FOR CHART -->
-                        <div id="chart-data" data-login="{{ stats.login_count|default(0) }}"
-                            data-upload="{{ stats.upload_count|default(0) }}"
-                            data-chat="{{ stats.chat_count|default(0) }}" class="hidden">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Users</p>
+                        <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.total_users }}</h2>
+                        <div class="w-full bg-slate-100 h-1.5 mt-4 rounded-full overflow-hidden">
+                            <div class="bg-indigo-500 h-full w-[70%]"></div>
                         </div>
+                    </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Activity Breakdown</h3>
-                                <canvas id="activityChart"></canvas>
-                            </div>
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Logs</h3>
-                                <div class="flow-root mt-6">
-                                    <ul class="-my-5 divide-y divide-gray-200">
-                                        {% for log in recent_logs %}
-                                        <li class="py-4">
-                                            <div class="flex items-center space-x-4">
-                                                <div class="flex-shrink-0">
-                                                    {% if log.action == 'login' %}
-                                                    <span
-                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
-                                                        <i class="fa-solid fa-user-check text-green-600"></i>
-                                                    </span>
-                                                    {% elif log.action == 'upload' %}
-                                                    <span
-                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
-                                                        <i class="fa-solid fa-upload text-blue-600"></i>
-                                                    </span>
-                                                    {% else %}
-                                                    <span
-                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
-                                                        <i class="fa-solid fa-comment text-gray-600"></i>
-                                                    </span>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900 truncate">
-                                                        User #{{ log.user_id }}
-                                                    </p>
-                                                    <p class="text-sm text-gray-500 truncate">
-                                                        {{ log.action | capitalize }} {{ log.details if log.details else
-                                                        '' }}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <a href="#"
-                                                        class="inline-flex items-center shadow-sm px-2.5 py-0.5 border border-gray-300 text-sm leading-5 font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50">
-                                                        {{ log.timestamp.strftime('%H:%M') }}
-                                                    </a>
-                                                </div>
+                    <!-- Stat 2 -->
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-file-pdf text-6xl text-purple-600"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Documents</p>
+                        <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.total_docs }}</h2>
+                        <div class="w-full bg-slate-100 h-1.5 mt-4 rounded-full overflow-hidden">
+                            <div class="bg-purple-500 h-full w-[45%]"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stat 3 -->
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-comments text-6xl text-pink-600"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Interactions</p>
+                        <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.total_chats }}</h2>
+                        <div class="w-full bg-slate-100 h-1.5 mt-4 rounded-full overflow-hidden">
+                            <div class="bg-pink-500 h-full w-[60%]"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stat 4 -->
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-bolt text-6xl text-yellow-500"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Today</p>
+                        <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.actions_today }}</h2>
+                        <p class="text-[10px] text-green-500 font-bold mt-2 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up"></i> Live Tracking
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Charts Area -->
+                <div class="grid lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Monthly Line Chart (New) -->
+                    <div class="glass-card p-6 rounded-2xl lg:col-span-2">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-lg text-slate-800">Monthly Usage Activity</h3>
+                            <span
+                                class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold">2024</span>
+                        </div>
+                        <div class="relative h-64 w-full">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Distribution Doughnut -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-lg text-slate-800">Action Type</h3>
+                        </div>
+                        <div class="relative h-64 w-full flex justify-center">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Logs Table -->
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-800">Recent Server Logs</h3>
+                        <a href="#" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">View All</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-xs uppercase font-bold text-slate-400">
+                                <tr>
+                                    <th class="px-6 py-4">Timestamp</th>
+                                    <th class="px-6 py-4">User</th>
+                                    <th class="px-6 py-4">Action</th>
+                                    <th class="px-6 py-4">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for log in recent_logs %}
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs font-bold font-mono text-slate-500">
+                                        {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <div
+                                                class="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
+                                                U{{ log.user_id }}
                                             </div>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
+                                            <span class="font-medium text-slate-900">User #{{ log.user_id }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if log.action == 'login' %}
+                                        <span
+                                            class="px-2 py-1 rounded-md bg-green-50 text-green-600 text-xs font-bold border border-green-100">Login</span>
+                                        {% elif log.action == 'upload' %}
+                                        <span
+                                            class="px-2 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100">Upload</span>
+                                        {% elif log.action == 'chat' %}
+                                        <span
+                                            class="px-2 py-1 rounded-md bg-purple-50 text-purple-600 text-xs font-bold border border-purple-100">Chat</span>
+                                        {% else %}
+                                        <span
+                                            class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">{{
+                                            log.action }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-500 truncate max-w-xs">
+                                        {{ log.details if log.details else '-' }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </main>
+
+                <div class="mt-8 text-center text-xs text-slate-400 pb-8">
+                    &copy; 2024 ScholarSync Admin Panel. Vercel Serverless Environment.
+                </div>
+
+            </div>
         </div>
+    </main>
+
+    <!-- Hidden Data for Charts -->
+    <div id="chart-data" data-login="{{ stats.login_count|default(0) }}"
+        data-upload="{{ stats.upload_count|default(0) }}" data-chat="{{ stats.chat_count|default(0) }}" class="hidden">
     </div>
 
+    <!-- We'll populate this from Backend soon -->
+    <div id="monthly-data" data-monthly="{{ monthly_data | tojson if monthly_data else '{}' }}" class="hidden"></div>
+
+
     <script>
-        // Best Practice: Fetch data from HTML attribute (avoids IDE syntax errors)
+        // --- 1. Activity Distribution (Doughnut) ---
         const dataContainer = document.getElementById('chart-data');
         const statsData = {
-            login: parseInt(dataContainer.dataset.login),
-            upload: parseInt(dataContainer.dataset.upload),
-            chat: parseInt(dataContainer.dataset.chat)
+            login: parseInt(dataContainer.dataset.login || 0),
+            upload: parseInt(dataContainer.dataset.upload || 0),
+            chat: parseInt(dataContainer.dataset.chat || 0)
         };
 
         const ctx = document.getElementById('activityChart').getContext('2d');
-        const activityChart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Logins', 'Uploads', 'Chats'],
+                labels: ['Logins', 'Uploads', 'Desain'],
                 datasets: [{
-                    label: '# of Actions',
                     data: [statsData.login, statsData.upload, statsData.chat],
-                    backgroundColor: [
-                        'rgba(34, 197, 94, 0.6)', // Green
-                        'rgba(59, 130, 246, 0.6)', // Blue
-                        'rgba(99, 102, 241, 0.6)'  // Indigo
-                    ],
-                    borderColor: [
-                        'rgba(34, 197, 94, 1)',
-                        'rgba(59, 130, 246, 1)',
-                        'rgba(99, 102, 241, 1)'
-                    ],
-                    borderWidth: 1
+                    backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                }
+            }
+        });
+
+        // --- 2. Monthly Activity (Line) ---
+        const monthlyContainer = document.getElementById('monthly-data');
+        let monthlyData = JSON.parse(monthlyContainer.dataset.monthly || '{}');
+
+        // Default dummy data if empty (for preview)
+        if (Object.keys(monthlyData).length === 0) {
+            monthlyData = { 'Jan': 10, 'Feb': 20, 'Mar': 45, 'Apr': 30, 'May': 60, 'Jun': 80 };
+        }
+
+        const mCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(mCtx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(monthlyData),
+                datasets: [{
+                    label: 'Total Activities',
+                    data: Object.values(monthlyData),
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#4f46e5',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
                 }
             }
         });

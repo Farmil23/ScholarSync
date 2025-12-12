@@ -42,6 +42,124 @@
             overflow-x: hidden;
             overflow-y: visible !important;
         }
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .toast-error {
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .toast-info {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        /* Danger Modal */
+        .modal-danger-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.2s;
+        }
+
+        .modal-danger-btn:hover {
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+            transform: translateY(-1px);
+        }
+    </style>
+    <!-- Custom Styles for Toast & Modal -->
+    <style>
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .toast-error {
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .toast-info {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        /* Danger Modal */
+        .modal-danger-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.2s;
+        }
+
+        .modal-danger-btn:hover {
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 
@@ -386,6 +504,36 @@
         </div>
     </div>
 
+    <!-- Confirm Delete Modal -->
+    <div id="delete-confirm-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-sm mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-95 opacity-0 duration-300"
+            id="delete-modal-content">
+            <div class="p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-red-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900" id="delete-modal-title">Hapus Dokumen?</h3>
+                <p class="text-sm text-slate-500 mt-2" id="delete-modal-desc">Dokumen ini akan dihapus permanen dan
+                    tidak bisa dikembalikan.</p>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                <button type="button" id="confirm-delete-btn"
+                    class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 modal-danger-btn text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    Hapus
+                </button>
+                <button type="button" onclick="toggleModal('delete-confirm-modal')"
+                    class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <script>
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
@@ -441,25 +589,78 @@
             }
         }
 
-        async function deleteDoc(docId, docName) {
-            if (confirm(`Apakah Anda yakin ingin menghapus dokumen "${docName}"?\nDokumen ini tidak akan bisa digunakan lagi untuk referensi.`)) {
-                try {
-                    const res = await fetch(`/document/${docId}/delete`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    if (res.ok) {
-                        window.location.reload();
-                    } else {
-                        const data = await res.json();
-                        alert("Gagal menghapus dokumen: " + (data.error || 'Unknown error'));
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert('Terjadi kesalahan koneksi');
-                }
-            }
+        // UI Helpers
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <span class="font-medium text-sm flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-times"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Auto Dismiss
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
+
+        let docIdToDelete = null;
+
+        function deleteDoc(docId, docName) {
+            docIdToDelete = docId;
+            document.getElementById('delete-modal-title').innerText = `Hapus "${docName}"?`;
+            toggleModal('delete-confirm-modal');
+        }
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if (!docIdToDelete) return;
+
+            const btn = document.getElementById('confirm-delete-btn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            try {
+                const res = await fetch(`/document/${docIdToDelete}/delete`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                toggleModal('delete-confirm-modal');
+
+                if (res.ok) {
+                    showToast('Dokumen berhasil dihapus', 'success');
+                    // Remove from UI immediately without reload if possible, or reload
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const data = await res.json();
+                    showToast("Gagal: " + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                toggleModal('delete-confirm-modal'); // Close modal on error too
+                showToast('Terjadi kesalahan koneksi', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                docIdToDelete = null;
+            }
+        });
 
         async function updateProgress(stage) {
             try {
@@ -469,9 +670,10 @@
                     body: JSON.stringify({ stage: stage })
                 });
                 if (res.ok) {
-                    window.location.reload(); // Reload to update UI state
+                    showToast('Progress diperbarui!', 'success');
+                    setTimeout(() => window.location.reload(), 500);
                 } else {
-                    alert("Gagal update progress");
+                    showToast("Gagal update progress", 'error');
                 }
             } catch (e) { console.error(e); }
         }
