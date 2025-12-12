@@ -34,8 +34,6 @@ app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
 app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
 # Database Config for Vercel (Neon/Postgres)
-# Database Config for Vercel (Neon/Postgres)
-# Database Config for Vercel (Neon/Postgres)
 database_url = os.getenv("DATABASE_URL")
 
 if not database_url:
