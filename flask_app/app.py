@@ -141,7 +141,7 @@ def get_agent_executor(user_id):
     Creates an Agent Executor with access to the user's vector store.
     Includes Prompt Engineering for Smart Citations.
     """
-    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+    from langchain_core.prompts import PromptTemplate
     from utils import get_llm # Lazy import
 
     llm = get_llm()
@@ -163,8 +163,12 @@ def get_agent_executor(user_id):
     # Filter by user_id
     retriever = vstore.as_retriever(search_kwargs={'filter': {'user_id': str(user_id)}, 'k': 3})
     
-    tool = create_retriever_tool(
+    retriever_tool = create_retriever_tool(
         retriever,
+        "search_user_documents",
+        "Searches and returns excerpts from the user's uploaded PDF documents."
+    )
+    
     search_tool = DuckDuckGoSearchRun(
         name="web_search", 
         description="Search the web for general knowledge, current events, or info not in the documents."
@@ -173,33 +177,44 @@ def get_agent_executor(user_id):
     tools = [retriever_tool, search_tool]
     
     # 2. React Prompt
-    template = '''You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
-Your goal is to help the student complete their thesis (Skripsi) with rigor and academic integrity.
+    template = """You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
 
 Role & Behavior:
 1. **Critical & Academic**: Don't just answer. Critique the student's question if it's vague. Suggest better academic phrasing.
-2. **Evidence-Based**: ALWAYS use the `search_uploaded_documents` tool first. Cite the document name and page number explicitly.
+2. **Evidence-Based**: ALWAYS use the `search_user_documents` tool first.
 3. **Structured**: When asked about "Research Gap" or "Framework", provide a structured list.
 4. **Language**: Use formal Indonesian (Bahasa Baku) mixed with standard English academic terms (e.g., "State of the Art", "Novelty").
 
 MANDATORY CITATION FORMAT:
-At the end of your Final Answer, you MUST include a list of used references in this exact format:
-**REFERENSI:**
-- [Nama File, Halaman X]: Kutipan singkat...
+When you mention information from a document, you MUST provide a citation in this EXACT format:
+[[filename.pdf|page_number]]
 
-Tools available:
+Example: 
+"According to the methodology [[thesis.pdf|5]], the precision was 95%."
+
+If the tool does not provide a page number, use 1 or omit the page part [[filename.pdf]].
+
+TOOLS:
+------
+You have access to the following tools:
+
 {tools}
 
-Format your response as follows:
+To use a tool, please use the following format:
 
-Question: the input question
-Thought: always think about what to search for in their documents
-Action: one of [{tool_names}]
-Action Input: the search query
-Observation: result of the tool
-...
-Thought: I have enough info (or I need to search the web if documents are empty)
-Final Answer: The academic answer with citations.
+```
+Thought: Do I need to use a tool? Yes
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+```
+
+When you have a response to the user, or if you do not need to use a tool, you must use the format:
+
+```
+Thought: Do I need to use a tool? No
+Final Answer: [your response here]
+```
 
 Begin!
 
@@ -207,7 +222,7 @@ Previous conversation history:
 {chat_history}
 
 Question: {input}
-Thought:{agent_scratchpad}'''
+Thought:{agent_scratchpad}"""
 
     prompt = PromptTemplate.from_template(template)
     
