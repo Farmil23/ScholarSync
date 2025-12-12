@@ -581,6 +581,14 @@ def serve_pdf(filename):
         print(f"📂 Redirecting to Blob: {doc.file_url}")
         return redirect(doc.file_url)
 
+    # If we are seemingly on Vercel (doc exists but no URL and not found locally), guide the user
+    # Note: We can't strictly detect Vercel here easily without env var, but the failure mode implies it.
+    if doc and not doc.file_url:
+        # Check if local file exists (for localhost support)
+        user_prefixed_name = f"{current_user.id}_{doc.filename}"
+        if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], user_prefixed_name)):
+             return "⚠️ Storage Error: File URL missing. Please DELETE and RE-UPLOAD this document to save it to Vercel Blob.", 404
+
     # 2. Fallback: Local /tmp storage
     import glob
     
