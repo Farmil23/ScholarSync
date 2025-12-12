@@ -543,6 +543,7 @@ def update_progress():
         return jsonify({'error': 'Failed to update'}), 400
 
 @app.route('/admin')
+@app.route('/dashboard/admin') # Alias for user convenience
 @login_required
 def admin_dashboard():
     if not current_user.is_admin:

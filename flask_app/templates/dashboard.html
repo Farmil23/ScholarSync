@@ -232,8 +232,15 @@
 
             <!-- Recent Documents / Library -->
             <div>
-                <h3 class="text-lg font-bold text-slate-800 mb-4"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i>
-                    Arsip Dokumen</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i>
+                        Arsip Dokumen</h3>
+                    <button onclick="toggleModal('upload-modal')"
+                        class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-100 transition flex items-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                    </button>
+                </div>
+                <!-- glass-card was here before, keeping context clean -->
                 <div class="glass-card rounded-xl overflow-hidden p-2 bg-white/50 max-h-[500px] overflow-y-auto">
                     {% if all_docs %}
                     <ul class="space-y-1">
@@ -319,6 +326,60 @@
         </div>
     </div>
 
+    <!-- Upload Document Modal -->
+    <div id="upload-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-slate-800">Upload Referensi</h3>
+                    <button onclick="toggleModal('upload-modal')" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-times text-xl"></i></button>
+                </div>
+
+                <form onsubmit="uploadDocument(event)">
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Pilih File PDF</label>
+                        <div
+                            class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition relative">
+                            <input type="file" id="file-upload" accept=".pdf"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                            <div class="pointer-events-none">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                                <p class="text-sm text-slate-500 font-medium" id="file-label">Klik atau drag file ke
+                                    sini</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Hanya file PDF (Max 10MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar (Hidden by default) -->
+                    <div id="upload-progress" class="hidden mb-6">
+                        <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>Processing...</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                                style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 italic">Sedang membaca dan mengindeks isi dokumen...
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="toggleModal('upload-modal')"
+                            class="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition">Batal</button>
+                        <button type="submit" id="btn-upload"
+                            class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
@@ -397,6 +458,81 @@
             // We'll let Chat page handle "Loading..." then fetching title if possible,
             // OR we can pass title in arguments.
             window.location.href = '/chat';
+        }
+
+        // File Input Label Update
+        document.getElementById('file-upload')?.addEventListener('change', function (e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                document.getElementById('file-label').innerText = fileName;
+                document.getElementById('file-label').classList.add('text-indigo-600');
+            }
+        });
+
+        async function uploadDocument(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-upload');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI Updates
+            const btn = document.getElementById('btn-upload');
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('progress-bar');
+
+            btn.disabled = true;
+            btn.innerText = "Mengupload...";
+            progressDiv.classList.remove('hidden');
+
+            // Simulate progress for UX (since fetch doesn't give upload progress easily without XHR)
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 10;
+                    progressBar.style.width = `${progress}%`;
+                    document.getElementById('progress-text').innerText = `${progress}%`;
+                }
+            }, 500);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(interval);
+
+                if (response.ok) {
+                    progressBar.style.width = '100%';
+                    document.getElementById('progress-text').innerText = '100%';
+                    btn.innerText = "Selesai!";
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    const data = await response.json();
+                    alert('Gagal upload: ' + (data.error || 'Unknown error'));
+                    resetUploadUI();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi');
+                resetUploadUI();
+            }
+        }
+
+        function resetUploadUI() {
+            const btn = document.getElementById('btn-upload');
+            const progressDiv = document.getElementById('upload-progress');
+
+            if (window.uploadInterval) clearInterval(window.uploadInterval);
+            btn.disabled = false;
+            btn.innerText = "Upload";
+            progressDiv.classList.add('hidden');
         }
     </script>
 
