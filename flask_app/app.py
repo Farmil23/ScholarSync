@@ -639,6 +639,18 @@ def get_session_details(session_id):
         'doc_names': [d.filename for d in session.documents]
     })
 
+@app.route('/session/<int:session_id>/documents', methods=['GET'])
+@login_required
+def get_session_documents(session_id):
+    chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    docs = chat_session.documents
+    
+    return jsonify([{
+        'id': d.id,
+        'filename': d.filename,
+        'uploaded_at': d.uploaded_at.isoformat() if d.uploaded_at else datetime.now().isoformat()
+    } for d in docs])
+
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
