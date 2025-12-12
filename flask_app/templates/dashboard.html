@@ -504,11 +504,42 @@
         </div>
     </div>
 
-    <!-- Confirm Delete Modal -->
+    <!-- Rename Document Modal (NEW) -->
+    <div id="rename-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-100 duration-300">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-slate-800">Ganti Nama Dokumen</h3>
+                    <button onclick="toggleModal('rename-modal')" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-times text-xl"></i></button>
+                </div>
+                <form onsubmit="submitRename(event)">
+                    <input type="hidden" id="rename-doc-id">
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Nama Baru</label>
+                        <input type="text" id="rename-doc-input"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
+                            required>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="toggleModal('rename-modal')"
+                            class="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition">Batal</button>
+                        <button type="submit"
+                            class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal (Fixed) -->
     <div id="delete-confirm-modal"
         class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-sm mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-95 opacity-0 duration-300"
+        <div class="modal-container bg-white w-11/12 md:max-w-sm mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all duration-300"
             id="delete-modal-content">
             <div class="p-6 text-center">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -569,23 +600,47 @@
             }
         }
 
-        async function renameDoc(docId, currentName) {
-            const newName = prompt("Ganti nama dokumen:", currentName);
-            if (newName && newName !== currentName) {
-                try {
-                    const res = await fetch(`/document/${docId}/rename`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: newName })
-                    });
-                    if (res.ok) {
-                        // Update UI simply by reloading or changing text
-                        // For simplicity, we just update text to avoid reload
-                        document.getElementById(`doc-name-${docId}`).innerText = newName;
-                    } else {
-                        alert("Gagal mengubah nama.");
-                    }
-                } catch (e) { console.error(e); }
+        // New Rename Logic with Modal
+        function renameDoc(docId, currentName) {
+            document.getElementById('rename-doc-id').value = docId;
+            document.getElementById('rename-doc-input').value = currentName;
+            toggleModal('rename-modal');
+        }
+
+        async function submitRename(e) {
+            e.preventDefault();
+            const docId = document.getElementById('rename-doc-id').value;
+            const newName = document.getElementById('rename-doc-input').value;
+
+            // Basic UI lock
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/document/${docId}/rename`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: newName })
+                });
+
+                if (res.ok) {
+                    // Update UI
+                    const nameEl = document.getElementById(`doc-name-${docId}`);
+                    if (nameEl) nameEl.innerText = newName;
+
+                    showToast('Nama dokumen diperbarui!', 'success');
+                    toggleModal('rename-modal');
+                } else {
+                    showToast("Gagal mengubah nama.", 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Kesalahan koneksi.", 'error');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 
