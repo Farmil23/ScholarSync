@@ -1,72 +1,108 @@
-# 🎓 ScholarSync
+# 🎓 ScholarSync - AI Thesis Consultant
 
-**ScholarSync** is a professional **Retrieval-Augmented Generation (RAG)** system designed to intelligently query and retrieve information from documents.
+**ScholarSync** is an intelligent "Dosen Pembimbing AI" designed to help final-year students (pejuang skripsi) analyze, summarize, and extract insights from their reference documents.
 
-Built with **LangChain**, **DataStax Astra DB**, and **Streamlit**, it allows users to have natural language conversations with their PDF libraries, featuring hybrid search and reranking for high-precision results.
+Built with a **Serverless First** architecture, it combines the power of **LLMs (OpenAI)**, **Vector Search (Astra DB)**, and **Cloud Storage (Vercel Blob)** to provide accurate, citation-backed answers.
 
-## 🚀 Features
+---
 
-- **Hybrid Search**: Combines Scalar Vector Search with Keyword Search (simulated via Reranking in this version).
-- **Advanced Reranking**: Uses `CrossEncoder` to refine search results for better relevance.
-- **Conversational Memory**: Remembers context across the chat session.
-- **Streamlit Interface**: Clean and responsive UI for easy interaction.
-- **Astra DB Integration**: Scalable vector storage in the cloud.
+## 🚀 Key Features
+
+### 🧠 Smart Analysis
+- **Context-Aware Chat**: The AI understands your specific documents and answers questions based *only* on them.
+- **Strict Context Isolation**: Chat sessions are isolated. Discussing "Project A" will never retrieve documents from "Project B".
+- **Smart Citations**: Every answer includes clickable citations (`[[file.pdf|page]]`) that verifying the source instantly.
+
+### 📄 Document Management
+- **PDF Viewer**: Split-screen viewer to read the exact page cited by the AI without leaving the chat.
+- **Persistent Cloud Storage**: Documents are securely stored in **Vercel Blob**, ensuring they remain available even in serverless deployments.
+- **Easy Organization**: Create "Proyek" (Sessions) to group documents by topic (e.g., "Bab 1", "Tinjauan Pustaka").
+
+### 🎨 Premium UI/UX
+- **Glassmorphism Design**: Modern, clean, and responsive interface using TailwindCSS.
+- **Interactive Dashboard**: Track your thesis progress, see monthly activity, and manage documents.
+- **Export to Markdown**: Download your chat history as a formatted draft for your thesis.
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Python, Streamlit
-- **LLM**: OpenAI (GPT-3.5/4) or HuggingFace (Local fallback)
-- **Vector Database**: DataStax Astra DB
-- **Orchestration**: LangChain
-- **Embeddings**: OpenAI `text-embedding-3-small` / `all-MiniLM-L6-v2`
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Backend** | Flask (Python) | Serverless-ready web framework |
+| **Frontend** | Jinja2 + TailwindCSS | Responsive server-side rendering |
+| **AI / LLM** | LangChain + OpenAI | Orchestration and Reasoning Agent |
+| **Database** | DataStax Astra DB | Serverless Vector Database for RAG |
+| **Storage** | Vercel Blob | Persistent object storage for PDFs |
+| **Deployment** | Vercel | Serverless hosting platform |
 
-## ⚙️ Installation
+---
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository_url>
-   cd ScholarSync
-   ```
+## ⚙️ Installation & Setup
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Environment Setup**
-   Create a `.env` file in the root directory and add your credentials:
-   ```env
-   # OpenAI (Optional, strictly recommended for quality)
-   OPENAI_API_KEY=sk-...
-
-   # Astra DB (Required)
-   ASTRA_DB_API_ENDPOINT=https://<your-db-id>-<region>.apps.astra.datastax.com
-   ASTRA_DB_APPLICATION_TOKEN=AstraCS:...
-   ```
-
-## 📖 Usage
-
-### 1. Ingest Documents
-Place your PDF files into the `data/` folder, then run the ingestion script to process and upload them to Astra DB.
-
+### 1. Clone Repository
 ```bash
-# Ensure you have PDFs in existing 'data' folder
-python ingest.py
+git clone <repository_url>
+cd ScholarSync
 ```
 
-### 2. Run the Application
-Launch the Streamlit interface:
-
+### 2. Install Dependencies
 ```bash
-streamlit run app.py
+pip install -r requirements.txt
 ```
 
-Visit `http://localhost:8501` in your browser.
+### 3. Environment Config
+Create a `.env` file in the root directory:
 
-## 📂 Project Structure
+```env
+# AI & Database
+OPENAI_API_KEY=sk-...
+ASTRA_DB_API_ENDPOINT=https://<your-db-id>-<region>.apps.astra.datastax.com
+ASTRA_DB_APPLICATION_TOKEN=AstraCS:...
 
-- `app.py`: Main Streamlit application.
-- `ingest.py`: Script to parse PDFs and load embeddings into Astra DB.
-- `flask_app/`: Alternative Flask backend (if applicable).
-- `data/`: Folder for source PDF documents.
-- `requirements.txt`: Python package dependencies.
+# Storage (Vercel Blob)
+BLOB_READ_WRITE_TOKEN=vercel_blob_...
+
+# Security
+SECRET_KEY=your_secret_key_here
+```
+
+### 4. Run Locally
+```bash
+python app.py
+```
+Visit `http://localhost:5000` to start.
+
+---
+
+## ☁️ Deployment (Vercel)
+
+This project is optimized for Vercel.
+
+1.  Push code to GitHub.
+2.  Import project in Vercel Dashboard.
+3.  Add the **Environment Variables** from step 3.
+4.  **Important**: Create a Blob Store in Vercel Storage tab and link it to get the `BLOB_READ_WRITE_TOKEN`.
+5.  Deploy! 🚀
+
+---
+
+## 📝 Usage Guide
+
+1.  **Login/Register**: Create an account to save your progress.
+2.  **Dashboard**: See your stats or click **"Mulai Bab Baru"** to create a session.
+3.  **Upload**: Upload your PDF references (e.g., journals, books).
+4.  **Chat**: Ask questions like:
+    *   *"Apa research gap dari paper A?"*
+    *   *"Buatkan kerangka teori dari dokumen ini."*
+    *   *"Sebutkan batasan masalah yang ada."*
+5.  **Verify**: Click on the citations (e.g., `📄 file.pdf P.5`) to open the PDF viewer.
+
+---
+
+## 🤝 Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+---
+
+**Happy Researching! 🎓**
