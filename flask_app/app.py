@@ -21,7 +21,7 @@ from langchain_openai import OpenAIEmbeddings
 # Local Imports
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils import get_llm
+# from utils import get_llm # Moved inside function due to import scope or removed
 from ingest_handler import ingest_file
 from flask_app.models import db, User, ChatSession, ChatMessage, Document, ActivityLog
 
@@ -58,7 +58,8 @@ if database_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = '/tmp/uploads' # Use /tmp which is writable on Vercel
+# app.config['UPLOAD_FOLDER'] = '/tmp/uploads' # Changed for Smart Citation Feature
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'docs')
 
 # Init Extensions
 db.init_app(app)
@@ -136,16 +137,34 @@ def get_astradb_retriever(user_id):
     )
 
 def get_agent_executor(user_id):
+    """
+    Creates an Agent Executor with access to the user's vector store.
+    Includes Prompt Engineering for Smart Citations.
+    """
+    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+    from utils import get_llm # Lazy import
+
     llm = get_llm()
     
-    # 1. Tools
-    retriever = get_astradb_retriever(user_id)
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "search_uploaded_documents",
-        "Searches and returns answers from the documents uploaded by the user. Use this FIRST if the user asks about their files."
+    # 1. Retriever Tool
+    api_endpoint = os.getenv("ASTRA_DB_API_ENDPOINT")
+    token = os.getenv("ASTRA_DB_APPLICATION_TOKEN")
+    
+    # Retrieve embedding model (same logic as ingest)
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")
+    
+    vstore = AstraDBVectorStore(
+        embedding=embedding,
+        collection_name="scholarsync_vector_db",
+        api_endpoint=api_endpoint,
+        token=token,
     )
     
+    # Filter by user_id
+    retriever = vstore.as_retriever(search_kwargs={'filter': {'user_id': str(user_id)}, 'k': 3})
+    
+    tool = create_retriever_tool(
+        retriever,
     search_tool = DuckDuckGoSearchRun(
         name="web_search", 
         description="Search the web for general knowledge, current events, or info not in the documents."
@@ -331,7 +350,7 @@ def upload_file():
         
         try:
             count = ingest_file(filepath, user_id, file.filename)
-            os.remove(filepath)
+            # os.remove(filepath) # Keep file for Smart Citation Feature
             if count == 0:
                  return jsonify({'error': 'Could not extract text from PDF'}), 400
             
@@ -448,6 +467,30 @@ def chat():
             'answer': f"System Error: {str(ie)}",
             'context': []
         })
+
+@app.route('/pdf/<path:filename>')
+@login_required
+def serve_pdf(filename):
+    """
+    Securely serves the PDF file.
+    Maps 'document.pdf' -> 'user_id_document.pdf'
+    """
+    # Security: Prevent directory traversal
+    safe_filename = os.path.basename(filename)
+    
+    # 1. Check for specific user-prefixed file
+    user_prefixed_name = f"{current_user.id}_{safe_filename}"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_prefixed_name)
+    
+    if os.path.exists(file_path):
+        return send_file(file_path)
+    
+    # Fallback: Try exact name (backward compatibility)
+    file_path_exact = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+    if os.path.exists(file_path_exact):
+         return send_file(file_path_exact)
+         
+    return "File not found", 404
 
 @app.route('/download_chat/<int:session_id>')
 @login_required

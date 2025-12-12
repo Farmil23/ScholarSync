@@ -130,7 +130,7 @@
         </aside>
 
         <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col relative w-full">
+        <main id="chat-main" class="flex-1 flex flex-col relative w-full transition-all duration-300">
 
             <!-- Chat History -->
             <div id="chat-history" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
@@ -186,6 +186,30 @@
                 </div>
             </div>
         </main>
+
+        <!-- PDF Viewer Panel (Hidden by Default) -->
+        <aside id="pdf-panel"
+            class="hidden w-full md:w-1/2 bg-slate-100 border-l border-white/50 flex-col shadow-2xl z-20 transition-all duration-300 ease-in-out">
+            <div class="h-14 bg-white border-b border-indigo-50 flex justify-between items-center px-4 shadow-sm">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                    <span id="pdf-viewer-title" class="text-sm font-bold text-slate-700 truncate">Document Viewer</span>
+                </div>
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                    <a id="pdf-download-link" href="#" target="_blank"
+                        class="text-slate-400 hover:text-indigo-600 p-2 transition" title="Download / Open New Tab">
+                        <i class="fa-solid fa-external-link-alt"></i>
+                    </a>
+                    <button onclick="closePdfViewer()" class="text-slate-400 hover:text-red-500 p-2 transition">
+                        <i class="fa-solid fa-times text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 relative bg-slate-500">
+                <iframe id="pdf-frame" class="w-full h-full" src=""></iframe>
+            </div>
+        </aside>
     </div>
 
     <!-- Marked.js -->
@@ -340,8 +364,24 @@
                 ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl rounded-tr-sm shadow-md"
                 : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm shadow-sm";
 
-            // Content Parsing
-            const contentHtml = isUser ? text : marked.parse(text);
+            // Content Parsing with Smart Citations
+            // Regex for [[filename|page]]
+            let contentHtml = isUser ? text : marked.parse(text);
+
+            if (!isUser) {
+                // Replace [[filename|page]] with clickable elements
+                // Matches [[file.pdf|12]] or [[file.pdf]]
+                const citationRegex = /\[\[(.*?)(?:\|(\d+))?\]\]/g;
+                contentHtml = contentHtml.replace(citationRegex, (match, filename, page) => {
+                    const pageNum = page || 1;
+                    return `<button onclick="openPdfViewer('${filename}', ${pageNum})" 
+                        class="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition align-middle cursor-pointer" title="Open PDF Page ${pageNum}">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span class="truncate max-w-[100px]">${filename}</span>
+                        <span class="bg-indigo-200 px-1 rounded text-[10px]">P.${pageNum}</span>
+                    </button>`;
+                });
+            }
 
             msgDiv.innerHTML = `
                 ${!isUser ? avatar : ''}
@@ -464,6 +504,55 @@
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> Disalin';
                 setTimeout(() => btn.innerHTML = original, 2000);
             }
+        }
+
+        // --- Smart PDF Viewer Logic ---
+        function openPdfViewer(filename, page = 1) {
+            const pdfPanel = document.getElementById('pdf-panel');
+            const chatMain = document.getElementById('chat-main');
+            const iframe = document.getElementById('pdf-frame');
+            const title = document.getElementById('pdf-viewer-title');
+            const downloadLink = document.getElementById('pdf-download-link');
+
+            // Encode filename for URL
+            const cleanFilename = filename.trim();
+            // Use secure route instead of static
+            const fileUrl = `/pdf/${cleanFilename}`;
+
+            // Show Panel
+            pdfPanel.classList.remove('hidden');
+            pdfPanel.classList.add('flex');
+
+            // Adjust Chat Area (Desktop)
+            // Note: Flexbox takes care of widths if we remove w-full from chat on desktop
+            // But easier to just overlay or split 50/50
+            if (window.innerWidth >= 768) {
+                // Desktop: Split Mode
+                // chatMain.classList.remove('w-full'); // Already flex-1
+                // We rely on flex-1 of chatMain and w-1/2 of pdfPanel
+            } else {
+                // Mobile: Overlay (Hide chat temporarily to avoid squish)
+                chatMain.classList.add('hidden');
+            }
+
+            // Update Content
+            title.innerText = `${cleanFilename} (Page ${page})`;
+            // Native PDF viewer page navigation: #page=
+            iframe.src = `${fileUrl}#page=${page}#zoom=100`;
+            downloadLink.href = fileUrl;
+        }
+
+        function closePdfViewer() {
+            const pdfPanel = document.getElementById('pdf-panel');
+            const chatMain = document.getElementById('chat-main');
+            const iframe = document.getElementById('pdf-frame');
+
+            pdfPanel.classList.add('hidden');
+            pdfPanel.classList.remove('flex');
+            chatMain.classList.remove('hidden'); // Show chat again if on mobile
+
+            // Reset iframe to stop memory/loading
+            setTimeout(() => { iframe.src = ''; }, 300);
         }
     </script>
 </body>
