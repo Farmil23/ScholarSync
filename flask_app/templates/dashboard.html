@@ -304,7 +304,7 @@
                     </h3>
                 </div>
 
-                <div id="projects-container" class="grid gap-4">
+                <div id="projects-container" class="grid gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                     {% if recent_sessions %}
                     {% for session in recent_sessions %}
                     <div onclick="openSession({{ session.id }})"
@@ -316,12 +316,32 @@
                                     class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition truncate">
                                     {{
                                     session.title }}</h4>
-                                <p class="text-xs text-slate-500 mt-1">Dibuat {{ session.created_at.strftime('%d %b %Y')
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    {% if session.documents %}
+                                    {% for doc in session.documents[:3] %}
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                        <i class="fa-solid fa-file-pdf mr-1 text-slate-400"></i> {{
+                                        doc.filename|truncate(20) }}
+                                    </span>
+                                    {% endfor %}
+                                    {% if session.documents|length > 3 %}
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
+                                        +{{ session.documents|length - 3 }} lainnya
+                                    </span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-[10px] text-slate-400 italic">Tanpa dokumen referensi</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-2">Dibuat {{ session.created_at.strftime('%d %b
+                                    %Y')
                                     }}</p>
                             </div>
                             <div
                                 class="bg-indigo-50 text-indigo-600 text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
-                                <i class="fa-solid fa-arrow-right"></i> Lanjut
+                                <i class="fa-solid fa-arrow-right"></i>
                             </div>
                         </div>
                     </div>
