@@ -508,7 +508,24 @@ def logout():
 @app.route('/chat')
 @login_required
 def chat_page():
-    return render_template('chat.html', user=current_user)
+    # Fetch all sessions for sidebar
+    sessions = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.updated_at.desc()).all()
+    return render_template('chat.html', user=current_user, sessions=sessions)
+
+@app.route('/session/<int:session_id>/rename', methods=['PUT'])
+@login_required
+def rename_session(session_id):
+    data = request.json
+    new_title = data.get('title')
+    
+    if not new_title:
+        return jsonify({'error': 'Title required'}), 400
+        
+    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
+    session.title = new_title
+    db.session.commit()
+    
+    return jsonify({'message': 'Session renamed', 'title': new_title})
 
 @app.route('/documents', methods=['GET'])
 @login_required

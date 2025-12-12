@@ -157,16 +157,54 @@
 
         <aside id="mobile-sidebar"
             class="absolute md:relative z-40 bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl md:bg-white/50 border-r border-white/50 dark:border-slate-700 w-72 h-full flex flex-col -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none transition-all duration-300">
+
+            <!-- Sidebar Header -->
             <div class="p-4 border-b border-indigo-50 dark:border-slate-700">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dokumen Terkait</h3>
-                <div
-                    class="bg-indigo-50/50 dark:bg-slate-700/50 rounded-xl p-3 border border-indigo-50 dark:border-slate-600 min-h-[100px] flex items-center justify-center text-center">
-                    <p class="text-xs text-slate-400">Dokumen sesi ini akan muncul di sini (Fitur coming soon).</p>
-                </div>
+                <button onclick="window.location.href='/dashboard'"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> New Chat (Dashboard)
+                </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                <!-- Placeholder for future file list in this session -->
+            <!-- Session History List -->
+            <div class="flex-1 overflow-y-auto p-3 custom-scrollbar">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Riwayat Chat</h3>
+                <ul class="space-y-1">
+                    {% if sessions %}
+                    {% for session in sessions %}
+                    <li>
+                        <button onclick="switchSession({{ session.id }}, '{{ session.title|replace("'", "\\'") }}')"
+                            class="w-full text-left p-3 rounded-xl flex items-center gap-3 transition group relative {{ 'bg-indigo-50 dark:bg-slate-700 border-indigo-200 dark:border-slate-600' if session.id == active_session_id else 'hover:bg-slate-50 dark:hover:bg-slate-700/50 border border-transparent' }}">
+                            <div
+                                class="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-slate-600 text-indigo-600 dark:text-indigo-300 flex items-center justify-center flex-shrink-0 text-xs">
+                                <i class="fa-solid fa-message"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{{
+                                    session.title }}</p>
+                                <p class="text-[10px] text-slate-400 truncate">{{ session.created_at.strftime('%d %b')
+                                    }}</p>
+                            </div>
+                            {% if session.id|string == current_session_id %}
+                            <div class="absolute right-2 w-2 h-2 rounded-full bg-green-500"></div>
+                            {% endif %}
+                        </button>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="text-center p-4 text-xs text-slate-400">Belum ada riwayat chat.</li>
+                    {% endif %}
+                </ul>
+
+                <!-- Separator -->
+                <div class="my-4 border-t border-slate-100 dark:border-slate-700"></div>
+
+                <!-- Active Session Docs (Moved here) -->
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Dokumen Sesi Ini</h3>
+                <div id="session-docs-list" class="space-y-2">
+                    <!-- Populated by JS -->
+                    <div class="p-4 text-xs text-center text-slate-400">Memuat dokumen...</div>
+                </div>
             </div>
 
             <div class="p-4 border-t border-indigo-50 dark:border-slate-700 bg-indigo-50/30 dark:bg-slate-800/50">
@@ -259,6 +297,39 @@
                 <iframe id="pdf-frame" class="w-full h-full" src=""></iframe>
             </div>
         </aside>
+        </aside>
+    </div>
+
+    <!-- Rename Session Modal -->
+    <div id="rename-session-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="toggleRenameModal()"></div>
+        <div
+            class="bg-white dark:bg-slate-800 md:w-96 w-11/12 rounded-2xl shadow-2xl z-50 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Ganti Nama Sesi</h3>
+                    <button onclick="toggleRenameModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <form onsubmit="submitRenameSession(event)">
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Nama
+                            Baru</label>
+                        <input type="text" id="rename-session-input"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-900 dark:text-white"
+                            required>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="toggleRenameModal()"
+                            class="px-4 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition">Batal</button>
+                        <button type="submit"
+                            class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-lg transition transform hover:scale-105">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Marked.js -->
@@ -296,8 +367,32 @@
         });
 
         // 1.5 Rename Session Logic
-        async function renameSession() {
-            const newTitle = prompt("Ganti nama sesi:", currentSessionTitle);
+        function toggleRenameModal() {
+            const modal = document.getElementById('rename-session-modal');
+            const overlay = modal.querySelector('.transition-transform');
+
+            if (modal.classList.contains('pointer-events-none')) {
+                // Open
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                overlay.classList.remove('scale-95');
+                overlay.classList.add('scale-100');
+                document.getElementById('rename-session-input').value = currentSessionTitle;
+            } else {
+                // Close
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                overlay.classList.remove('scale-100');
+                overlay.classList.add('scale-95');
+            }
+        }
+
+        // Exposed for the header button
+        function renameSession() {
+            toggleRenameModal();
+        }
+
+        async function submitRenameSession(e) {
+            e.preventDefault();
+            const newTitle = document.getElementById('rename-session-input').value;
             if (newTitle && newTitle !== currentSessionTitle) {
                 try {
                     const res = await fetch(`/session/${currentSessionId}/rename`, {
@@ -308,12 +403,19 @@
                     if (res.ok) {
                         document.getElementById('header-session-title').innerText = newTitle;
                         localStorage.setItem('current_session_title', newTitle);
-                        // alert("Berhasil diubah!");
+                        toggleRenameModal();
+                        // Optional: Refresh page to update sidebar, or update DOM directly if we cared
                     } else {
                         alert("Gagal mengubah nama.");
                     }
                 } catch (e) { console.error(e); }
             }
+        }
+
+        function switchSession(id, title) {
+            localStorage.setItem('current_session_id', id);
+            localStorage.setItem('current_session_title', title);
+            window.location.reload();
         }
 
         // 1.6 Load Session Docs (for Sidebar)
@@ -324,7 +426,7 @@
                 const docs = await res.json();
 
                 // Target sidebar container
-                const container = document.querySelector('#mobile-sidebar .overflow-y-auto');
+                const container = document.getElementById('session-docs-list');
                 if (container) {
                     container.innerHTML = '';
                     if (docs.length === 0) {
