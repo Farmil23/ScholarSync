@@ -255,11 +255,17 @@
                                     title="{{ doc.filename }}">{{ doc.filename }}</p>
                                 <p class="text-[10px] text-slate-400">{{ doc.uploaded_at.strftime('%d/%m/%Y') }}</p>
                             </div>
-                            <!-- Safe Rename Button -->
-                            <button onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
-                                class="absolute right-3 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 transition">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
+                            <!-- Actions -->
+                            <div class="absolute right-3 opacity-0 group-hover:opacity-100 flex gap-2 transition">
+                                <button onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
+                                    class="text-slate-400 hover:text-indigo-600 transition" title="Ganti Nama">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
+                                    class="text-slate-400 hover:text-red-600 transition" title="Hapus Dokumen">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
                         </li>
                         {% endfor %}
                     </ul>
@@ -432,6 +438,26 @@
                         alert("Gagal mengubah nama.");
                     }
                 } catch (e) { console.error(e); }
+            }
+        }
+
+        async function deleteDoc(docId, docName) {
+            if (confirm(`Apakah Anda yakin ingin menghapus dokumen "${docName}"?\nDokumen ini tidak akan bisa digunakan lagi untuk referensi.`)) {
+                try {
+                    const res = await fetch(`/document/${docId}/delete`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        const data = await res.json();
+                        alert("Gagal menghapus dokumen: " + (data.error || 'Unknown error'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Terjadi kesalahan koneksi');
+                }
             }
         }
 

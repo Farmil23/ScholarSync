@@ -520,6 +520,23 @@ def rename_document(doc_id):
         return jsonify({'message': 'Document renamed'})
     return jsonify({'error': 'No filename provided'}), 400
 
+@app.route('/document/<int:doc_id>/delete', methods=['DELETE'])
+@login_required
+def delete_document(doc_id):
+    doc = Document.query.filter_by(id=doc_id, user_id=current_user.id).first_or_404()
+    
+    try:
+        # Optional: Delete from Vector Store here if possible
+        # For now, we just delete the record so it can't be used for new chats.
+        
+        # Remove from database
+        db.session.delete(doc)
+        db.session.commit()
+        return jsonify({'message': 'Document deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/session/<int:session_id>/documents', methods=['GET'])
 @login_required
 def get_session_documents(session_id):
