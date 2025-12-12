@@ -174,7 +174,7 @@ def get_agent_executor(user_id, doc_names=None):
     api_endpoint = os.getenv("ASTRA_DB_API_ENDPOINT")
     token = os.getenv("ASTRA_DB_APPLICATION_TOKEN")
     
-    # Retrieve embedding model (same logic as ingest)
+    # Retrieve embedding model
     embedding = OpenAIEmbeddings(model="text-embedding-3-small")
     
     vstore = AstraDBVectorStore(
@@ -184,8 +184,26 @@ def get_agent_executor(user_id, doc_names=None):
         token=token,
     )
     
-    # Filter by user_id
-    retriever = vstore.as_retriever(search_kwargs={'filter': {'user_id': str(user_id)}, 'k': 3})
+    # Build Filter
+    # Base filter: Must match user_id
+    filter_dict = {'user_id': str(user_id)}
+    
+    # Session Context Filter: If doc_names (specific context) is provided, restrict retrieval
+    # This prevents the AI from citing "Group 1" doc in "Group 2" session.
+    if doc_names:
+        # Astra DB / LangChain filter syntax for "IN"
+        if len(doc_names) == 1:
+             filter_dict['source'] = doc_names[0]
+        else:
+             filter_dict['source'] = {'$in': doc_names}
+    
+    # Use the specific filter
+    retriever = vstore.as_retriever(
+        search_kwargs={
+            'filter': filter_dict, 
+            'k': 4 # Increased slightly for better context
+        }
+    )
     
     retriever_tool = create_retriever_tool(
         retriever,
@@ -201,7 +219,7 @@ def get_agent_executor(user_id, doc_names=None):
     tools = [retriever_tool, search_tool]
     
     # Format valid filenames for the prompt
-    valid_files_str = ", ".join(doc_names) if doc_names else "No specific files."
+    valid_files_str = ", ".join(doc_names) if doc_names else "No specific files (General Knowledge Mode)."
 
     # 2. React Prompt
     template = f"""You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
@@ -418,8 +436,11 @@ def upload_file():
                 import vercel_blob
                 # Read file back
                 with open(filepath, 'rb') as f:
-                    # Upload
-                    blob_resp = vercel_blob.put(filename_secure, f.read(), options={'access': 'public'})
+                    # Upload with explicit Content-Type ensures browser knows to display likely
+                    blob_resp = vercel_blob.put(filename_secure, f.read(), options={
+                        'access': 'public',
+                        'content_type': 'application/pdf' 
+                    })
                     file_url = blob_resp.get('url')
                     print(f"✅ Uploaded to Blob: {file_url}")
             except ImportError as ie:
@@ -511,11 +532,21 @@ def chat():
                 
         # 3. Invoke Agent
         # Fetch valid filenames to prevent hallucinations
-        # We can either use ALL user docs, or only those in the session.
-        # For simplicity and context, let's use all user docs so the agent knows what's available physically
-        # (Though technically it should be filtered by session, but retriever filters by user anyway)
-        user_docs = Document.query.filter_by(user_id=current_user.id).all()
-        doc_names = [d.filename for d in user_docs]
+        # CRITICAL: Filter by the documents SPECIFICALLY associated with this chat session.
+        # If the session has documents, ONLY use those.
+        # If the session has NO documents, maybe allow all? Or strictly none? 
+        # The user requested "kekhususan suatu chat" (specificity of a chat), implying strict isolation.
+        
+        session_docs = chat_session.documents
+        if session_docs:
+            doc_names = [d.filename for d in session_docs]
+            print(f"🔒 Context Isolated to Session Docs: {doc_names}")
+        else:
+            # Fallback: If no docs linked, use all user docs (or empty list if strict mode desired)
+            # For now, let's keep it safe: if no docs linked, maybe general request?
+            user_docs = Document.query.filter_by(user_id=current_user.id).all()
+            doc_names = [d.filename for d in user_docs]
+            print(f"🔓 No session docs linked. Fallback to all {len(doc_names)} user docs.")
         
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         

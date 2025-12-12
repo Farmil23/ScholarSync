@@ -517,7 +517,8 @@
             // Encode filename for URL
             const cleanFilename = filename.trim();
             // Use secure route instead of static
-            const fileUrl = `/pdf/${cleanFilename}`;
+            // Cache busting: Add timestamp to force reload if previous attempt was 404
+            const fileUrl = `/pdf/${cleanFilename}?t=${new Date().getTime()}`;
 
             // Show Panel
             pdfPanel.classList.remove('hidden');
