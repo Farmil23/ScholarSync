@@ -912,16 +912,7 @@ def delete_document(doc_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/session/<int:session_id>/documents', methods=['GET'])
-@login_required
-def get_session_documents(session_id):
-    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
-    docs = [{
-        'id': d.id,
-        'filename': d.filename,
-        'uploaded_at': d.uploaded_at.isoformat()
-    } for d in session.documents]
-    return jsonify(docs)
+
 
 @app.route('/update_progress', methods=['POST'])
 @login_required
