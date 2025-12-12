@@ -58,8 +58,16 @@ if database_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.config['UPLOAD_FOLDER'] = '/tmp/uploads' # Changed for Smart Citation Feature
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'docs')
+
+# File Configuration
+# On Vercel (Serverless), we must use /tmp
+# We check if we are in a read-only environment or specific env var
+is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+
+if is_vercel:
+    app.config['UPLOAD_FOLDER'] = '/tmp'
+else:
+    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'docs')
 
 # Init Extensions
 db.init_app(app)
@@ -69,7 +77,12 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # Setup Uploads
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+except OSError:
+    # Fallback to tmp if creation fails (e.g. read-only)
+    app.config['UPLOAD_FOLDER'] = '/tmp'
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @login_manager.user_loader
 def load_user(user_id):
