@@ -577,8 +577,8 @@ def admin_dashboard():
     recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(20).all()
     
     # Stats for Charts
-    import datetime
-    today = datetime.date.today()
+    # import datetime # Removed to avoid shadowing
+    today = datetime.now().date()
     actions_today = ActivityLog.query.filter(ActivityLog.timestamp >= today).count()
     
     login_count = ActivityLog.query.filter_by(action='login').count()
