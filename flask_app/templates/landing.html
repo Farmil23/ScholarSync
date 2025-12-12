@@ -71,10 +71,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/'">
-                    <div
-                        class="h-10 w-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
+                    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ScholarSync Logo"
+                        class="h-10 w-auto rounded-lg">
                     <span class="font-bold text-xl tracking-tight text-slate-900">ScholarSync</span>
                 </div>
 
@@ -578,13 +576,11 @@
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid md:grid-cols-4 gap-12 mb-16">
                 <!-- Brand Column -->
-                <div class="col-span-1 md:col-span-1">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div
-                            class="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-900">
-                            <i class="fa-solid fa-graduation-cap text-lg"></i>
-                        </div>
-                        <span class="font-bold text-2xl text-white tracking-tight">ScholarSync</span>
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ScholarSync Logo"
+                            class="h-8 w-auto rounded-lg">
+                        <span class="font-bold text-lg text-slate-900">ScholarSync</span>
                     </div>
                     <p class="text-slate-400 text-sm leading-relaxed mb-8">
                         Platform AI Research Assistant #1 di Indonesia. Fokus selesaikan substansi skripsi Anda, biarkan

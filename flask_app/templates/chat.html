@@ -160,10 +160,8 @@
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
             <a href="/dashboard" class="flex items-center gap-2 hover:opacity-80 transition">
-                <div
-                    class="h-8 w-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                    <i class="fa-solid fa-graduation-cap text-sm"></i>
-                </div>
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ScholarSync Logo"
+                    class="h-8 w-auto rounded-lg">
                 <!-- Hidden on mobile small, shown on sm -->
                 <span
                     class="font-bold text-lg hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">ScholarSync</span>
