@@ -8,16 +8,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
         }
 
         .glass-nav {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         .gradient-text {
@@ -25,35 +35,61 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        .hero-blob {
+            position: absolute;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: moveBlob 10s infinite alternate;
+        }
+
+        @keyframes moveBlob {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(20px, -20px) scale(1.1);
+            }
+        }
     </style>
 </head>
 
-<body class="bg-indigo-50/30 text-slate-800">
+<body class="bg-[#F8FAFC] text-slate-800 overflow-x-hidden">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="hero-blob bg-indigo-300 w-96 h-96 rounded-full top-0 left-0 mix-blend-multiply"></div>
+        <div
+            class="hero-blob bg-purple-300 w-96 h-96 rounded-full bottom-0 right-0 mix-blend-multiply animation-delay-2000">
+        </div>
+    </div>
 
     <!-- Header -->
-    <nav class="glass-nav fixed w-full z-50">
+    <nav class="glass-nav fixed w-full z-50 transition-all duration-300" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/'">
                     <div
                         class="h-10 w-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight">SkripsiSync</span>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">SkripsiSync</span>
                 </div>
 
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#features"
-                        class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">Fitur</a>
+                        class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Fitur</a>
                     <a href="#how-it-works"
-                        class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">Cara Kerja</a>
-                    <a href="#faq" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition">FAQ</a>
+                        class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Cara Kerja</a>
+                    <a href="#faq" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">FAQ</a>
                 </div>
 
                 <div class="flex items-center gap-4">
                     {% if current_user.is_authenticated %}
                     <a href="/dashboard"
-                        class="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-full hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+                        class="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-full hover:bg-slate-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         Dashboard <i class="fa-solid fa-arrow-right ml-2"></i>
                     </a>
                     {% else %}
@@ -69,251 +105,347 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="pt-32 pb-20 px-4">
-        <div class="max-w-7xl mx-auto text-center">
-            <span
-                class="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-6 border border-indigo-100">
-                🚀 Partner Resmi Pejuang Skripsi
-            </span>
-            <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 leading-tight mb-8">
-                Selesaikan Skripsi <br>
-                <span class="gradient-text">10x Lebih Cepat</span>
+    <section class="pt-36 pb-20 px-4 relative">
+        <div class="max-w-7xl mx-auto text-center relative z-10" data-aos="fade-up">
+            <div
+                class="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white border border-indigo-100 shadow-sm mb-8 animate-bounce-slow">
+                <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-bold text-slate-600 tracking-wide uppercase">AI Research Assistant v1.0</span>
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.15] mb-8 tracking-tight">
+                Skripsi Selesai <br>
+                <span class="gradient-text">Tanpa Drama Revisi.</span>
             </h1>
-            <p class="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Platform AI yang didesain khusus untuk mahasiswa tingkat akhir. Cari <b>Research Gap</b>, susun
-                <b>Kerangka Teori</b>, dan validasi referensi tanpa drama.
+
+            <p class="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed font-medium">
+                Platform AI pertama yang membantu mahasiswa menemukan <b>Research Gap</b>, menyusun <b>Landasan
+                    Teori</b>, dan memvalidasi referensi secara otomatis.
             </p>
-            <div class="flex justify-center gap-4">
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
                 <a href="/register"
-                    class="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition shadow-xl shadow-slate-200 flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-yellow-400"></i> Mulai Konsultasi
+                    class="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition shadow-xl shadow-slate-200 flex items-center justify-center gap-3 transform hover:-translate-y-1">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> Coba Sekarang Gratis
                 </a>
                 <a href="#how-it-works"
-                    class="px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center gap-2">
-                    <i class="fa-regular fa-circle-play"></i> Cara Kerja
+                    class="px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center justify-center gap-3 hover:shadow-md">
+                    <i class="fa-solid fa-play text-indigo-500"></i> Lihat Demo
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- UI Mockup -->
-    <section class="max-w-6xl mx-auto px-4 mb-24 relative z-10">
-        <div class="glass-nav rounded-2xl border border-slate-200 p-2 shadow-2xl shadow-indigo-100">
+    <!-- Mockup / Visual -->
+    <section class="max-w-6xl mx-auto px-4 mb-32 relative z-10" data-aos="fade-up" data-aos-delay="200">
+        <div class="glass-nav rounded-2xl border border-white/50 p-3 shadow-2xl shadow-indigo-100/50 bg-white/40">
             <div
-                class="bg-slate-50 rounded-xl overflow-hidden aspect-[16/9] relative flex items-center justify-center group">
-                <img src="/static/img/dashboard_mockup.png" alt="Dashboard Preview"
-                    class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700">
-                <!-- Overlay Play Button (Optional visual flair) -->
+                class="bg-indigo-950 rounded-xl overflow-hidden aspect-[16/9] relative flex items-center justify-center group shadow-inner">
+                <!-- Replace with actual screenshot later -->
+                <div class="absolute inset-0 bg-gradient-to-br from-slate-900 to-indigo-950"></div>
+
+                <!-- Mockup Content (Abstract representation) -->
                 <div
-                    class="absolute inset-0 bg-indigo-900/10 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                    <span
-                        class="px-6 py-2 bg-white/90 backdrop-blur rounded-full text-indigo-900 font-bold text-sm shadow-xl transform translate-y-4 group-hover:translate-y-0 transition">Lihat
-                        Demo</span>
+                    class="w-full h-full p-8 flex gap-6 opacity-90 transition group-hover:opacity-100 group-hover:scale-[1.01] duration-500">
+                    <!-- Sidebar -->
+                    <div
+                        class="w-1/4 h-full bg-white/5 rounded-lg border border-white/10 p-4 space-y-3 hidden md:block">
+                        <div class="h-8 w-3/4 bg-white/10 rounded mb-6"></div>
+                        <div class="h-4 w-full bg-white/5 rounded"></div>
+                        <div class="h-4 w-5/6 bg-white/5 rounded"></div>
+                        <div class="h-4 w-4/5 bg-white/5 rounded"></div>
+                    </div>
+                    <!-- Main -->
+                    <div class="flex-1 h-full bg-white rounded-lg shadow-xl p-6 flex flex-col">
+                        <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                            <div
+                                class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                <i class="fa-solid fa-robot"></i></div>
+                            <div class="flex-1">
+                                <div class="h-4 w-48 bg-slate-100 rounded"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-3 flex-1">
+                            <div class="h-3 w-full bg-slate-50 rounded"></div>
+                            <div class="h-3 w-5/6 bg-slate-50 rounded"></div>
+                            <div class="h-3 w-4/5 bg-slate-50 rounded"></div>
+                            <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100 mt-4">
+                                <p class="text-xs text-indigo-800 font-mono">Based on Document A (Page 12): "The
+                                    research gap implies..."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <!-- Floating UI Elements -->
+                    <div
+                        class="absolute -right-10 top-20 bg-white p-4 rounded-xl shadow-xl animate-bounce-slow delay-75 hidden lg:block">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                <i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-bold">Validasi Referensi</p>
+                                <p class="text-sm font-bold text-slate-800">100% Akurat</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- Decorative blobs -->
-        <div
-            class="absolute top-1/2 left-0 -z-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
-        </div>
-        <div
-            class="absolute top-1/2 right-0 -z-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-200">
+    </section>
+
+    <!-- Social Proof -->
+    <section class="py-10 border-y border-slate-200/50 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400 font-semibold text-sm uppercase tracking-widest mb-8">Dipercaya Mahasiswa Dari</p>
+            <div
+                class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                <!-- Placeholders for Uni Logos -->
+                <div class="flex items-center gap-2 font-bold text-xl text-slate-600"><i
+                        class="fa-solid fa-building-columns"></i> UI</div>
+                <div class="flex items-center gap-2 font-bold text-xl text-slate-600"><i
+                        class="fa-solid fa-building-columns"></i> UGM</div>
+                <div class="flex items-center gap-2 font-bold text-xl text-slate-600"><i
+                        class="fa-solid fa-building-columns"></i> ITB</div>
+                <div class="flex items-center gap-2 font-bold text-xl text-slate-600"><i
+                        class="fa-solid fa-building-columns"></i> UNAIR</div>
+                <div class="flex items-center gap-2 font-bold text-xl text-slate-600"><i
+                        class="fa-solid fa-building-columns"></i> UB</div>
+            </div>
         </div>
     </section>
 
-    <!-- Features -->
-    <section id="features" class="py-24 bg-white">
+    <!-- Features Grid -->
+    <section id="features" class="py-24 relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold text-slate-900">Kenapa SkripsiSync?</h2>
-                <p class="text-slate-500 mt-4">Dibuat oleh mahasiswa (alumni), untuk mahasiswa.</p>
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Kenapa SkripsiSync?</h2>
+                <p class="text-slate-500 text-lg max-w-2xl mx-auto">Kami menggabungkan teknologi LLM tercanggih dengan
+                    database jurnal untuk hasil yang akademis.</p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div
-                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-50 transition group">
+                <!-- Feature 1 -->
+                <div class="group bg-white p-8 rounded-3xl border border-slate-100 shadow-lg shadow-indigo-50 hover:shadow-2xl hover:shadow-indigo-100 hover:-translate-y-2 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="0">
                     <div
-                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition">
-                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        class="h-16 w-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-2xl mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-microscope"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Cari Research Gap</h3>
-                    <p class="text-slate-500 leading-relaxed">Bingung mau neliti apa? Upload 5 jurnal terkait, AI kami
-                        akan menemukan celah penelitian yang belum disentuh.</p>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Analisis Research Gap</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Upload jurnal referensi Anda, dan AI akan menemukan celah penelitian yang valid untuk judul
+                        skripsi Anda dalam hitungan detik.
+                    </p>
                 </div>
 
-                <!-- Card 2 -->
-                <div
-                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-purple-100 hover:shadow-xl hover:shadow-purple-50 transition group">
+                <!-- Feature 2 -->
+                <div class="group bg-white p-8 rounded-3xl border border-slate-100 shadow-lg shadow-purple-50 hover:shadow-2xl hover:shadow-purple-100 hover:-translate-y-2 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="100">
                     <div
-                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition">
-                        <i class="fa-solid fa-user-tie"></i>
+                        class="h-16 w-16 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 text-2xl mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-user-doctor"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Dosen AI 24/7</h3>
-                    <p class="text-slate-500 leading-relaxed">Tanya revisian jam 2 pagi? Dr. Sync siap membantu kritik
-                        metodologi dan struktur penulisanmu.</p>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Virtual Supervisor</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Simulasi bimbingan kapan saja. Tanyakan metode penelitian, struktur penulisan, atau minta review
+                        draf bab Anda.
+                    </p>
                 </div>
 
-                <!-- Card 3 -->
-                <div
-                    class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-50 transition group">
+                <!-- Feature 3 -->
+                <div class="group bg-white p-8 rounded-3xl border border-slate-100 shadow-lg shadow-emerald-50 hover:shadow-2xl hover:shadow-emerald-100 hover:-translate-y-2 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="200">
                     <div
-                        class="h-14 w-14 bg-white rounded-2xl shadow-sm text-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:scale-110 transition">
-                        <i class="fa-solid fa-quote-right"></i>
+                        class="h-16 w-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-quote-left"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-3">Anti Halusinasi</h3>
-                    <p class="text-slate-500 leading-relaxed">Setiap argumen yang dikeluarkan AI dilengkapi sitasi
-                        halaman referensi asli. Validitas terjamin.</p>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Smart Citations</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Anti halusinasi. Setiap jawaban AI dilengkapi referensi halaman spesifik dari dokumen PDF yang
+                        Anda upload.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- How It Works (Docs) -->
-    <section id="how-it-works" class="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 relative z-10">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div>
-                    <h2 class="text-3xl md:text-4xl font-bold mb-6">Cara Kerja Simpel <br> <span
-                            class="text-indigo-400">3 Langkah Lulus</span></h2>
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-24 bg-slate-900 text-white relative isolate overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 -z-10 opacity-20"
+            style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 30px 30px;"></div>
 
-                    <div class="space-y-8">
-                        <div class="flex gap-4">
-                            <div
-                                class="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold flex-shrink-0">
-                                1</div>
-                            <div>
-                                <h4 class="font-bold text-lg">Buat Proyek Baru</h4>
-                                <p class="text-slate-400 text-sm mt-1">Beri nama proyek (misal: "Bab 2") di Dashboard.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div
-                                class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center font-bold flex-shrink-0">
-                                2</div>
-                            <div>
-                                <h4 class="font-bold text-lg">Upload Referensi</h4>
-                                <p class="text-slate-400 text-sm mt-1">Upload PDF Jurnal atau Skripsi terdahulu. AI akan
-                                    membacanya dalam detik.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div
-                                class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center font-bold flex-shrink-0">
-                                3</div>
-                            <div>
-                                <h4 class="font-bold text-lg">Konsultasi & Export</h4>
-                                <p class="text-slate-400 text-sm mt-1">Tanya apa saja, lalu download draft hasil diskusi
-                                    ke Word.</p>
-                            </div>
-                        </div>
-                    </div>
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <span class="text-indigo-400 font-bold uppercase tracking-wider text-sm">Workflow</span>
+                <h2 class="text-3xl md:text-5xl font-bold mt-2">Dari Bingung Jadi Sidang</h2>
+            </div>
+
+            <div class="relative">
+                <!-- Connecting Line (Desktop) -->
+                <div
+                    class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-indigo-500/20 via-indigo-500 to-indigo-500/20 -translate-y-1/2 z-0">
                 </div>
-                <div class="relative">
-                    <!-- Illustration Placeholder -->
-                    <div
-                        class="bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl p-1 shadow-2xl rotate-3 hover:rotate-0 transition duration-500">
+
+                <div class="grid md:grid-cols-3 gap-12 relative z-10">
+                    <!-- Step 1 -->
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="0">
                         <div
-                            class="bg-slate-800 rounded-2xl h-80 flex items-center justify-center border border-white/10">
-                            <i class="fa-solid fa-robot text-8xl text-white/20"></i>
+                            class="bg-indigo-600 h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg shadow-indigo-500/50 ring-4 ring-slate-900 relative">
+                            1
                         </div>
+                        <h4 class="text-xl font-bold mb-3">Buat Project</h4>
+                        <p class="text-indigo-200/80 px-4">Bikin ruang kerja baru sesuai Bab Skripsi yang sedang
+                            dikerjakan.</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="150">
+                        <div
+                            class="bg-indigo-600 h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg shadow-indigo-500/50 ring-4 ring-slate-900 relative">
+                            2
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">Upload Referensi</h4>
+                        <p class="text-indigo-200/80 px-4">Upload PDF jurnal, buku, atau paper. AI akan membaca semuanya
+                            instan.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="300">
+                        <div
+                            class="bg-indigo-600 h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg shadow-indigo-500/50 ring-4 ring-slate-900 relative">
+                            3
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">Diskusi & Eksekusi</h4>
+                        <p class="text-indigo-200/80 px-4">Tanya apa saja, dapatkan insight, dan tulis skripsi 10x lebih
+                            cepat.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FAQ -->
-    <section id="faq" class="py-24 bg-indigo-50/50">
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 bg-indigo-50/30">
         <div class="max-w-3xl mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center text-slate-900 mb-12">Pertanyaan Umum (FAQ)</h2>
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-12" data-aos="fade-up">Frequently Asked
+                Questions</h2>
 
-            <div class="space-y-4">
-                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
-                    <summary
-                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
-                        <span>Apakah gratis digunakan?</span>
-                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
-                    </summary>
-                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
-                        Ya! Saat ini SkripsiSync dalam fase Beta dan gratis untuk semua mahasiswa. Kami mungkin akan
-                        memperkenalkan fitur premium di masa depan.
+            <div class="space-y-4" data-aos="fade-up" data-aos-delay="100">
+                <!-- FAQ Item -->
+                <div class="bg-white rounded-2xl border border-indigo-50 overflow-hidden">
+                    <button
+                        class="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none transition-colors hover:bg-slate-50"
+                        onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')">
+                        <span class="font-bold text-slate-700">Apakah SkripsiSync Gratis?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="px-6 pb-6 text-slate-600 hidden">
+                        Ya, saat ini kami berada dalam tahap Beta Publik. Semua fitur dapat diakses secara gratis oleh
+                        mahasiswa dengan kuota penggunaan wajar.
                     </div>
-                </details>
+                </div>
 
-                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
-                    <summary
-                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
-                        <span>Apakah data skripsi saya aman?</span>
-                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
-                    </summary>
-                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
-                        Sangat aman. Dokumen Anda dienkripsi dan hanya dapat diakses oleh Anda sendiri dalam sesi privat
-                        (Private Workspace). Kami tidak menjual data Anda.
+                <div class="bg-white rounded-2xl border border-indigo-50 overflow-hidden">
+                    <button
+                        class="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none transition-colors hover:bg-slate-50"
+                        onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')">
+                        <span class="font-bold text-slate-700">Apakah data saya aman?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="px-6 pb-6 text-slate-600 hidden">
+                        Keamanan adalah prioritas kami. Dokumen Anda disimpan dalam Private Storage yang terenkripsi dan
+                        tidak dibagikan ke pengguna lain atau digunakan untuk melatih model publik.
                     </div>
-                </details>
-                <details class="bg-white rounded-2xl shadow-sm border border-indigo-50 group">
-                    <summary
-                        class="p-6 font-bold text-slate-800 cursor-pointer list-none flex justify-between items-center">
-                        <span>Berapa banyak dokumen yang bisa diupload?</span>
-                        <i class="fa-solid fa-chevron-down text-indigo-400 group-open:rotate-180 transition"></i>
-                    </summary>
-                    <div class="px-6 pb-6 text-slate-600 leading-relaxed">
-                        Anda bisa mengupload hingga 20 dokumen PDF per akun untuk saat ini. Cukup untuk satu bab
-                        skripsi!
+                </div>
+
+                <div class="bg-white rounded-2xl border border-indigo-50 overflow-hidden">
+                    <button
+                        class="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none transition-colors hover:bg-slate-50"
+                        onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')">
+                        <span class="font-bold text-slate-700">Mendukung bahasa apa saja?</span>
+                        <i class="fa-solid fa-chevron-down text-indigo-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="px-6 pb-6 text-slate-600 hidden">
+                        AI kami mendukung Bahasa Indonesia dan Bahasa Inggris secara penuh, termasuk mampu membaca
+                        jurnal internasional berbahasa Inggris dan menjelaskannya dalam Bahasa Indonesia.
                     </div>
-                </details>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-100 py-12">
-        <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8">
-            <div class="col-span-1 md:col-span-2">
-                <div class="flex items-center gap-2 mb-4">
-                    <div class="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                        <i class="fa-solid fa-graduation-cap text-xs"></i>
+    <footer class="bg-white border-t border-slate-100 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <span class="font-bold text-lg text-slate-900">SkripsiSync</span>
                     </div>
-                    <span class="font-bold text-lg">SkripsiSync</span>
+                    <p class="text-slate-500 mb-6 max-w-sm">Teman seperjuangan mahasiswa akhir. Selesaikan skripsi lebih
+                        cepat dengan bantuan AI yang valid dan akademis.</p>
                 </div>
-                <p class="text-slate-400 text-sm max-w-xs mb-6">Membantu mahasiswa Indonesia lulus tepat waktu dengan
-                    teknologi AI tercanggih.</p>
-                <div class="flex gap-4">
-                    <a href="#"
-                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
-                            class="fa-brands fa-twitter"></i></a>
-                    <a href="#"
-                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
-                            class="fa-brands fa-instagram"></i></a>
-                    <a href="#"
-                        class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-indigo-600 transition"><i
-                            class="fa-brands fa-linkedin"></i></a>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">Platform</h4>
+                    <ul class="space-y-2 text-slate-500 text-sm">
+                        <li><a href="#" class="hover:text-indigo-600 transition">Fitur</a></li>
+                        <li><a href="#" class="hover:text-indigo-600 transition">Harga</a></li>
+                        <li><a href="#" class="hover:text-indigo-600 transition">Cara Kerja</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">Company</h4>
+                    <ul class="space-y-2 text-slate-500 text-sm">
+                        <li><a href="#" class="hover:text-indigo-600 transition">Tentang Kami</a></li>
+                        <li><a href="#" class="hover:text-indigo-600 transition">Kontak</a></li>
+                        <li><a href="#" class="hover:text-indigo-600 transition">Privacy Policy</a></li>
+                    </ul>
                 </div>
             </div>
 
-            <div>
-                <h4 class="font-bold text-slate-800 mb-4">Produk</h4>
-                <ul class="space-y-2 text-sm text-slate-500">
-                    <li><a href="#features" class="hover:text-indigo-600">Fitur Utama</a></li>
-                    <li><a href="#" class="hover:text-indigo-600">Harga</a></li>
-                    <li><a href="#" class="hover:text-indigo-600">Testimoni</a></li>
-                </ul>
+            <div
+                class="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400">
+                <p>&copy; 2024 SkripsiSync. Dibuat dengan <i class="fa-solid fa-heart text-red-400"></i> untuk Pejuang
+                    Skripsi.</p>
+                <div class="flex gap-4 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-slate-600"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" class="hover:text-slate-600"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-slate-600"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
             </div>
-
-            <div>
-                <h4 class="font-bold text-slate-800 mb-4">Legal</h4>
-                <ul class="space-y-2 text-sm text-slate-500">
-                    <li><a href="#" class="hover:text-indigo-600">Privacy Policy</a></li>
-                    <li><a href="#" class="hover:text-indigo-600">Terms of Service</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-slate-100 text-center text-xs text-slate-400">
-            &copy; 2024 SkripsiSync. Dibuat dengan ☕ dan Kode.
         </div>
     </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        // Navbar blur effect on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-md');
+                navbar.classList.replace('bg-transparent', 'bg-white/80');
+            } else {
+                navbar.classList.remove('shadow-md');
+                // Keep glass effect
+            }
+        });
+    </script>
 
 </body>
 
