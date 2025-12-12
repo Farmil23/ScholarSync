@@ -509,7 +509,7 @@ def logout():
 @login_required
 def chat_page():
     # Fetch all sessions for sidebar
-    sessions = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.updated_at.desc()).all()
+    sessions = ChatSession.query.filter_by(user_id=current_user.id).order_by(ChatSession.created_at.desc()).all()
     return render_template('chat.html', user=current_user, sessions=sessions)
 
 @app.route('/session/<int:session_id>/rename', methods=['PUT'])
