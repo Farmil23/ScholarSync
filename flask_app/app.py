@@ -117,6 +117,16 @@ with app.app_context():
                 conn.execute(text('ALTER TABLE "user" ADD COLUMN thesis_stage INTEGER DEFAULT 0'))
                 conn.commit()
             print("Migration successful.")
+
+        # Simple Auto-Migration for 'file_url' in 'document'
+        doc_columns = [c['name'] for c in inspector.get_columns('document')]
+        if 'file_url' not in doc_columns:
+            print("Migrating: Adding file_url column to document table...")
+            with db.engine.connect() as conn:
+                # Add column, set default null
+                conn.execute(text('ALTER TABLE "document" ADD COLUMN file_url VARCHAR(512)'))
+                conn.commit()
+            print("Migration successful: file_url added.")
             
     except Exception as e:
         print(f"⚠️ Database connection failed during startup: {e}")
@@ -374,16 +384,43 @@ def upload_file():
 
     if file:
         user_id = str(current_user.id)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{user_id}_{file.filename}")
+        # 1. Save Locally (Temporary for Ingestion)
+        filename_secure = f"{user_id}_{file.filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename_secure)
         file.save(filepath)
         
         try:
+            # 2. Ingest to Vector DB
             count = ingest_file(filepath, user_id, file.filename)
-            # os.remove(filepath) # Keep file for Smart Citation Feature
             if count == 0:
                  return jsonify({'error': 'Could not extract text from PDF'}), 400
             
-            new_doc = Document(user_id=current_user.id, filename=file.filename, chunk_count=count)
+            file_url = None
+            
+            # 3. Upload to Vercel Blob (if token exists)
+            # Use basic requests or wrapper if available. Python SDK is unofficial.
+            # Fallback: We won't implement complex Blob logic without SDK.
+            # BUT, we can try to use vercel_blob if installed.
+            try:
+                import vercel_blob
+                # Read file back
+                with open(filepath, 'rb') as f:
+                    # Upload
+                    blob_resp = vercel_blob.put(filename_secure, f.read(), options={'access': 'public'})
+                    file_url = blob_resp.get('url')
+                    print(f"✅ Uploaded to Blob: {file_url}")
+            except ImportError:
+                 print("⚠️ vercel_blob not installed. Skipping Blob upload.")
+            except Exception as e:
+                 print(f"⚠️ Blob Upload Failed: {e}")
+
+            # 4. Save to DB
+            new_doc = Document(
+                user_id=current_user.id, 
+                filename=file.filename, 
+                chunk_count=count,
+                file_url=file_url # Save URL
+            )
             db.session.add(new_doc)
             db.session.commit()
             
@@ -502,27 +539,26 @@ def chat():
 def serve_pdf(filename):
     """
     Securely serves the PDF file.
-    Maps 'document.pdf' -> 'user_id_document.pdf'
+    1. Checks DB for Vercel Blob URL (Redirect).
+    2. Fallback to local storage (for localhost or ephemeral).
     """
-    import glob
-    
-    # 0. Debug Logging
-    print(f"📂 PDF Request: {filename}")
-    print(f"📂 Upload Folder: {app.config['UPLOAD_FOLDER']}")
-    try:
-        files = glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], '*'))
-        print(f"📂 Files in Folder: {[os.path.basename(f) for f in files]}")
-    except Exception as e:
-        print(f"📂 Error listing files: {e}")
-
-    # Security: Prevent directory traversal
     safe_filename = os.path.basename(filename)
     
-    # 1. Check for specific user-prefixed file
+    # 1. Check DB for Blob URL
+    # We try to match filename. Note: DB filename might be "A.pdf" while requested is "A.pdf"
+    # But currently the Viewer requests the original filename "A.pdf".
+    doc = Document.query.filter_by(user_id=current_user.id, filename=safe_filename).order_by(Document.uploaded_at.desc()).first()
+    
+    if doc and doc.file_url:
+        print(f"📂 Redirecting to Blob: {doc.file_url}")
+        return redirect(doc.file_url)
+
+    # 2. Fallback: Local /tmp storage
+    import glob
+    
+    # Check for specific user-prefixed file
     user_prefixed_name = f"{current_user.id}_{safe_filename}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_prefixed_name)
-    
-    print(f"📂 Looking for: {file_path}")
     
     if os.path.exists(file_path):
         return send_file(file_path)

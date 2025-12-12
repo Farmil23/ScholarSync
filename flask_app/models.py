@@ -52,6 +52,7 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
+    file_url = db.Column(db.String(512), nullable=True) # Vercel Blob URL (or S3)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     # chunk_count could be useful
     chunk_count = db.Column(db.Integer, default=0) 
