@@ -34,3 +34,4 @@ pypdf>=4.0.1
 byteplus-python-sdk-v2
 python-dotenv
 ddgs
+vercel-blob

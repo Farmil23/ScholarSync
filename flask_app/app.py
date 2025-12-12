@@ -422,10 +422,14 @@ def upload_file():
                     blob_resp = vercel_blob.put(filename_secure, f.read(), options={'access': 'public'})
                     file_url = blob_resp.get('url')
                     print(f"✅ Uploaded to Blob: {file_url}")
-            except ImportError:
-                 print("⚠️ vercel_blob not installed. Skipping Blob upload.")
+            except ImportError as ie:
+                 print("⚠️ vercel_blob not installed. Application Error.")
+                 raise RuntimeError("Backend config error: vercel-blob invalid or missing. Check requirements.txt")
             except Exception as e:
                  print(f"⚠️ Blob Upload Failed: {e}")
+                 # CRITICAL: If we are on Vercel, this is fatal regular persistence.
+                 # Raise error so user knows upload failed.
+                 raise RuntimeError(f"Vercel Blob Upload Failed: {str(e)}. Check BLOB_READ_WRITE_TOKEN.")
 
             # 4. Save to DB
             new_doc = Document(
