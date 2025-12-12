@@ -504,6 +504,17 @@ def serve_pdf(filename):
     Securely serves the PDF file.
     Maps 'document.pdf' -> 'user_id_document.pdf'
     """
+    import glob
+    
+    # 0. Debug Logging
+    print(f"📂 PDF Request: {filename}")
+    print(f"📂 Upload Folder: {app.config['UPLOAD_FOLDER']}")
+    try:
+        files = glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], '*'))
+        print(f"📂 Files in Folder: {[os.path.basename(f) for f in files]}")
+    except Exception as e:
+        print(f"📂 Error listing files: {e}")
+
     # Security: Prevent directory traversal
     safe_filename = os.path.basename(filename)
     
@@ -511,15 +522,17 @@ def serve_pdf(filename):
     user_prefixed_name = f"{current_user.id}_{safe_filename}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_prefixed_name)
     
+    print(f"📂 Looking for: {file_path}")
+    
     if os.path.exists(file_path):
         return send_file(file_path)
     
-    # Fallback: Try exact name (backward compatibility)
+    # Fallback: Try exact name
     file_path_exact = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
     if os.path.exists(file_path_exact):
          return send_file(file_path_exact)
          
-    return "File not found", 404
+    return f"File not found. Searched for {user_prefixed_name}", 404
 
 @app.route('/download_chat/<int:session_id>')
 @login_required
