@@ -77,6 +77,120 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# --- Localization Config ---
+translations = {
+    'en': {
+        'dashboard_title': 'Dashboard',
+        'welcome': 'Hello, Thesis Warrior! 👋',
+        'subtitle': 'Focus on progress. What is your target today?',
+        'new_chapter': 'Start New Chapter',
+        'total_refs': 'Total References',
+        'keep_growing': 'Keep growing!',
+        'consultations': 'Consultations',
+        'active_sessions': 'Active sessions',
+        'thesis_progress': 'Thesis Progress',
+        'target_week': 'Target This Week',
+        'target_desc': 'Finish Chapter 2 Revision (Theory) before Friday meeting.',
+        'doc_status': 'Document Status',
+        'doc_ready': 'All references indexed and ready for AI analysis.',
+        'daily_tip': 'Daily Tip',
+        'tip_content': '"A good thesis is a finished thesis. Don\'t be a perfectionist on the first draft!"',
+        'active_projects': 'Active Projects',
+        'created': 'Created',
+        'continue': 'Continue',
+        'no_projects': 'No projects yet. Start a new consultation!',
+        'doc_archive': 'Document Archive',
+        'upload': 'Upload',
+        'no_docs': 'No documents yet.',
+        'upload_now': 'Upload Now',
+        'search_placeholder': 'Search projects or documents...',
+        'sort_newest': 'Newest',
+        'sort_oldest': 'Oldest',
+        'sort_name': 'Name (A-Z)',
+        'modal_new_project': 'Start New Project',
+        'project_name_label': 'Project / Chapter Name',
+        'project_name_placeholder': 'Example: Chapter 2 Literature Review',
+        'select_refs': 'Select Reference Documents',
+        'ai_note': 'AI will only answer based on selected documents.',
+        'cancel': 'Cancel',
+        'create': 'Create Project',
+        'upload_ref': 'Upload Reference',
+        'select_pdf': 'Select PDF File',
+        'drag_drop': 'Click or drag file here',
+        'pdf_only': 'PDF files only (Max 10MB)',
+        'processing': 'Processing...',
+        'reading_doc': 'Reading and indexing document content...',
+        'rename_doc': 'Rename Document',
+        'new_name': 'New Name',
+        'save': 'Save',
+        'delete_doc': 'Delete Document?',
+        'delete_confirm_desc': 'This document will be permanently deleted and cannot be restored.',
+        'delete': 'Delete',
+        'labels': ['Title', 'Chap 1', 'Chap 2', 'Chap 3', 'Defense', 'Done']
+    },
+    'id': {
+        'dashboard_title': 'Dashboard',
+        'welcome': 'Halo, Pejuang Skripsi! 👋',
+        'subtitle': 'Fokus pada progres. Apa targetmu hari ini?',
+        'new_chapter': 'Mulai Bab Baru',
+        'total_refs': 'Total Referensi',
+        'keep_growing': 'Terus bertambah!',
+        'consultations': 'Konsultasi',
+        'active_sessions': 'Sesi aktif',
+        'thesis_progress': 'Progress Skripsi',
+        'target_week': 'Target Minggu Ini',
+        'target_desc': 'Selesaikan Revisi Bab 2 (Teori) sebelum bimbingan Jumat.',
+        'doc_status': 'Status Dokumen',
+        'doc_ready': 'Semua referensi telah terindeks dan siap dianalisis AI.',
+        'daily_tip': 'Tips Hari Ini',
+        'tip_content': '"Skripsi yang baik adalah skripsi yang selesai. Jangan perfeksionis di draft pertama!"',
+        'active_projects': 'Proyek Aktif',
+        'created': 'Dibuat',
+        'continue': 'Lanjut',
+        'no_projects': 'Belum ada proyek. Mulai konsultasi baru!',
+        'doc_archive': 'Arsip Dokumen',
+        'upload': 'Upload',
+        'no_docs': 'Belum ada dokumen.',
+        'upload_now': 'Upload Sekarang',
+        'search_placeholder': 'Cari proyek atau dokumen...',
+        'sort_newest': 'Terbaru',
+        'sort_oldest': 'Terlama',
+        'sort_name': 'Nama (A-Z)',
+        'modal_new_project': 'Mulai Proyek Baru',
+        'project_name_label': 'Nama Proyek / Bab',
+        'project_name_placeholder': 'Contoh: Bab 2 Tinjauan Pustaka',
+        'select_refs': 'Pilih Dokumen Referensi',
+        'ai_note': 'AI hanya akan menjawab berdasarkan dokumen yang dipilih.',
+        'cancel': 'Batal',
+        'create': 'Buat Proyek',
+        'upload_ref': 'Upload Referensi',
+        'select_pdf': 'Pilih File PDF',
+        'drag_drop': 'Klik atau drag file ke sini',
+        'pdf_only': 'Hanya file PDF (Max 10MB)',
+        'processing': 'Memproses...',
+        'reading_doc': 'Sedang membaca dan mengindeks isi dokumen...',
+        'rename_doc': 'Ganti Nama Dokumen',
+        'new_name': 'Nama Baru',
+        'save': 'Simpan',
+        'delete_doc': 'Hapus Dokumen?',
+        'delete_confirm_desc': 'Dokumen ini akan dihapus permanen dan tidak bisa dikembalikan.',
+        'delete': 'Hapus',
+        'labels': ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang', 'Selesai']
+    }
+}
+
+@app.context_processor
+def inject_conf_var():
+    lang = request.args.get('lang', request.cookies.get('lang', 'id'))
+    if lang not in translations:
+        lang = 'id'
+    
+    def t(key):
+        return translations[lang].get(key, key)
+    
+    return dict(t=t, current_lang=lang, translations=translations)
+
+
 # Setup Uploads
 try:
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

@@ -4,8 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SkripsiSync</title>
+    <title>{{ t('dashboard_title') }} - SkripsiSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            text: '#f1f5f9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -15,12 +31,21 @@
             background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f5f3ff 100%);
         }
 
+        .dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .premium-btn {
@@ -71,64 +96,9 @@
             min-width: 300px;
         }
 
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast-success {
-            color: #10b981;
-            border-color: #10b981;
-        }
-
-        .toast-error {
-            color: #ef4444;
-            border-color: #ef4444;
-        }
-
-        .toast-info {
-            color: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        /* Danger Modal */
-        .modal-danger-btn {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            transition: all 0.2s;
-        }
-
-        .modal-danger-btn:hover {
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-            transform: translateY(-1px);
-        }
-    </style>
-    <!-- Custom Styles for Toast & Modal -->
-    <style>
-        /* Toast Notification */
-        #toast-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            pointer-events: none;
-        }
-
-        .toast {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-left: 4px solid;
-            padding: 1rem 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transform: translateX(100%);
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            min-width: 300px;
+        .dark .toast {
+            background: rgba(30, 41, 59, 0.95);
+            color: white;
         }
 
         .toast.show {
@@ -159,11 +129,24 @@
         .modal-danger-btn:hover {
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
             transform: translateY(-1px);
+        }
+
+        /* Scrollbar for dark mode */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
     </style>
 </head>
 
-<body class="text-slate-800 min-h-screen">
+<body class="text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
     <!-- Navigation -->
     <nav class="glass-card sticky top-0 z-40 px-6 py-4">
@@ -171,12 +154,25 @@
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-graduation-cap text-indigo-600 text-xl"></i>
                 <span
-                    class="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-indigo-600">SkripsiSync</span>
+                    class="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-indigo-600 dark:from-white dark:to-indigo-400">SkripsiSync</span>
             </div>
             <div class="flex items-center gap-4">
+                <!-- Toggles -->
+                <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                    <button onclick="toggleTheme()"
+                        class="p-1.5 rounded-md hover:bg-white dark:hover:bg-slate-600 transition text-slate-500 dark:text-slate-300">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                    <div class="h-4 w-[1px] bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                    <button onclick="changeLang('en')"
+                        class="text-xs font-bold px-2 py-1 rounded-md transition {{ 'bg-white shadow text-indigo-600 dark:bg-slate-600 dark:text-white' if current_lang == 'en' else 'text-slate-500 dark:text-slate-400 hover:text-indigo-600' }}">EN</button>
+                    <button onclick="changeLang('id')"
+                        class="text-xs font-bold px-2 py-1 rounded-md transition {{ 'bg-white shadow text-indigo-600 dark:bg-slate-600 dark:text-white' if current_lang == 'id' else 'text-slate-500 dark:text-slate-400 hover:text-indigo-600' }}">ID</button>
+                </div>
+
                 <div class="hidden md:flex flex-col text-right">
-                    <span class="text-sm font-bold text-slate-700">{{ user.username }}</span>
-                    <span class="text-xs text-slate-500">Student</span>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ user.username }}</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">Student</span>
                 </div>
                 <div
                     class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold shadow-md">
@@ -195,12 +191,12 @@
         <!-- Header -->
         <div class="flex justify-between items-end mb-10">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900">Halo, Pejuang Skripsi! 👋</h1>
-                <p class="text-slate-500 mt-2">Fokus pada progres. Apa targetmu hari ini?</p>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ t('welcome') }}</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2">{{ t('subtitle') }}</p>
             </div>
             <button onclick="toggleModal('project-modal')"
                 class="premium-btn text-white px-6 py-3 rounded-xl shadow-lg font-bold flex items-center gap-2">
-                <i class="fa-solid fa-folder-plus"></i> Mulai Bab Baru
+                <i class="fa-solid fa-folder-plus"></i> {{ t('new_chapter') }}
             </button>
         </div>
 
@@ -209,36 +205,37 @@
             <!-- Stats 1 -->
             <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-book text-6xl text-indigo-600"></i>
+                    <i class="fa-solid fa-book text-6xl text-indigo-600 dark:text-indigo-400"></i>
                 </div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Referensi</p>
-                <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.docs_count }}</h2>
-                <p class="text-[10px] text-green-500 font-bold mt-1"><i class="fa-solid fa-arrow-up"></i> Terus
-                    bertambah!</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ t('total_refs') }}</p>
+                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mt-2">{{ stats.docs_count }}</h2>
+                <p class="text-[10px] text-green-500 font-bold mt-1"><i class="fa-solid fa-arrow-up"></i> {{
+                    t('keep_growing') }}</p>
             </div>
 
             <!-- Stats 2 -->
             <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-comments text-6xl text-purple-600"></i>
+                    <i class="fa-solid fa-comments text-6xl text-purple-600 dark:text-purple-400"></i>
                 </div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Konsultasi</p>
-                <h2 class="text-3xl font-extrabold text-slate-800 mt-2">{{ stats.chats_count }}</h2>
-                <p class="text-[10px] text-indigo-500 font-bold mt-1">Sesi aktif</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ t('consultations') }}</p>
+                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mt-2">{{ stats.chats_count }}</h2>
+                <p class="text-[10px] text-indigo-500 font-bold mt-1">{{ t('active_sessions') }}</p>
             </div>
 
             <!-- Thesis Roadmap Progress (Interactive) -->
             <div class="glass-card p-6 rounded-2xl md:col-span-2 flex flex-col justify-center relative overflow-hidden">
                 <div class="flex justify-between items-center mb-4 z-10">
-                    <h3 class="font-bold text-slate-800">Progress Skripsi</h3>
-                    <span class="text-xs font-bold bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">
-                        {{ ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'][current_user.thesis_stage] if
-                        current_user.thesis_stage < 5 else 'Selesai' }} </span>
+                    <h3 class="font-bold text-slate-800 dark:text-white">{{ t('thesis_progress') }}</h3>
+                    <span
+                        class="text-xs font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 px-2 py-1 rounded-lg">
+                        {{ t('labels')[current_user.thesis_stage] if current_user.thesis_stage < 5 else 'Selesai' }}
+                            </span>
                 </div>
 
                 <div class="relative z-10">
                     <!-- Progress Bar Background -->
-                    <div class="w-full bg-slate-100 rounded-full h-3 mb-6 relative">
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 mb-6 relative">
                         <!-- Active Progress -->
                         <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-700 ease-out"
                             style="width: {{ [(current_user.thesis_stage / 4) * 100, 100]|min }}%"></div>
@@ -247,8 +244,8 @@
                         <div class="absolute inset-0 flex justify-between items-center px-0">
                             {% for i in range(5) %}
                             <button onclick="updateProgress({{ i }})"
-                                class="w-4 h-4 rounded-full border-2 {{ 'bg-indigo-600 border-white shadow-md scale-125' if i <= current_user.thesis_stage else 'bg-slate-200 border-white' }} hover:scale-150 transition focus:outline-none"
-                                title="Set to {{ ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'][i] }}">
+                                class="w-4 h-4 rounded-full border-2 {{ 'bg-indigo-600 border-white shadow-md scale-125' if i <= current_user.thesis_stage else 'bg-slate-200 dark:bg-slate-600 border-white dark:border-slate-800' }} hover:scale-150 transition focus:outline-none"
+                                title="Set to {{ t('labels')[i] }}">
                             </button>
                             {% endfor %}
                         </div>
@@ -256,19 +253,19 @@
 
                     <!-- Labels -->
                     <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                        {% set labels = ['Judul', 'Bab 1', 'Bab 2', 'Bab 3', 'Sidang'] %}
                         {% for i in range(5) %}
                         <span
-                            class="cursor-pointer hover:text-indigo-600 transition {{ 'text-indigo-600' if i <= current_user.thesis_stage else '' }}"
+                            class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition {{ 'text-indigo-600 dark:text-indigo-400' if i <= current_user.thesis_stage else '' }}"
                             onclick="updateProgress({{ i }})">
-                            {{ labels[i] }}
+                            {{ t('labels')[i] }}
                         </span>
                         {% endfor %}
                     </div>
                 </div>
 
                 <!-- Background decoration -->
-                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-50">
+                <div
+                    class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/30 rounded-full blur-2xl opacity-50">
                 </div>
             </div>
         </div>
@@ -278,19 +275,19 @@
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                 <input type="text" id="dashboard-search" onkeyup="filterDashboard()"
-                    class="w-full pl-12 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-medium glass-card"
-                    placeholder="Cari proyek atau dokumen...">
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-medium glass-card dark:text-white dark:placeholder-slate-500"
+                    placeholder="{{ t('search_placeholder') }}">
             </div>
             <div class="flex gap-2">
                 <select id="sort-select" onchange="sortItems()"
-                    class="px-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-600 glass-card cursor-pointer">
-                    <option value="newest">Terbaru</option>
-                    <option value="oldest">Terlama</option>
-                    <option value="name">Nama (A-Z)</option>
+                    class="px-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-600 dark:text-slate-300 glass-card cursor-pointer">
+                    <option value="newest">{{ t('sort_newest') }}</option>
+                    <option value="oldest">{{ t('sort_oldest') }}</option>
+                    <option value="name">{{ t('sort_name') }}</option>
                 </select>
                 <button onclick="toggleModal('upload-modal')"
-                    class="bg-white text-indigo-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">Upload</span>
+                    class="bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">{{ t('upload') }}</span>
                 </button>
             </div>
         </div>
@@ -299,8 +296,9 @@
             <!-- Active Projects (Sessions) -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800">
-                        <i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i> Proyek Aktif
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">
+                        <i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400 mr-2"></i> {{
+                        t('active_projects') }}
                     </h3>
                 </div>
 
@@ -308,92 +306,98 @@
                     {% if recent_sessions %}
                     {% for session in recent_sessions %}
                     <div onclick="openSession({{ session.id }})"
-                        class="searchable-item glass-card p-5 rounded-xl hover:bg-white hover:shadow-lg transition cursor-pointer border-l-4 border-indigo-500 group"
+                        class="searchable-item glass-card p-5 rounded-xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-lg transition cursor-pointer border-l-4 border-indigo-500 group"
                         data-name="{{ session.title|lower }}" data-date="{{ session.created_at.timestamp() }}">
                         <div class="flex justify-between items-start">
                             <div class="flex-1 min-w-0 pr-4">
                                 <h4
-                                    class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition truncate">
+                                    class="font-bold text-slate-800 dark:text-gray-100 text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
                                     {{
                                     session.title }}</h4>
                                 <div class="flex flex-wrap gap-1 mt-2">
                                     {% if session.documents %}
                                     {% for doc in session.documents[:3] %}
                                     <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                                         <i class="fa-solid fa-file-pdf mr-1 text-slate-400"></i> {{
                                         doc.filename|truncate(20) }}
                                     </span>
                                     {% endfor %}
                                     {% if session.documents|length > 3 %}
                                     <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
-                                        +{{ session.documents|length - 3 }} lainnya
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                        +{{ session.documents|length - 3 }} many
                                     </span>
                                     {% endif %}
                                     {% else %}
-                                    <span class="text-[10px] text-slate-400 italic">Tanpa dokumen referensi</span>
+                                    <span class="text-[10px] text-slate-400 italic">No reference docs</span>
                                     {% endif %}
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-2">Dibuat {{ session.created_at.strftime('%d %b
-                                    %Y')
+                                <p class="text-[10px] text-slate-400 mt-2">{{ t('created') }} {{
+                                    session.created_at.strftime('%d %b %Y')
                                     }}</p>
                             </div>
                             <div
-                                class="bg-indigo-50 text-indigo-600 text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
-                                <i class="fa-solid fa-arrow-right"></i>
+                                class="bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
+                                <i class="fa-solid fa-arrow-right"></i> {{ t('continue') }}
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="glass-card p-10 text-center rounded-xl border border-dashed border-slate-300">
-                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-4"></i>
-                        <p class="text-slate-500">Belum ada proyek. Mulai konsultasi baru!</p>
+                    <div
+                        class="glass-card p-10 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-600">
+                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 dark:text-slate-600 mb-4"></i>
+                        <p class="text-slate-500 dark:text-slate-400">{{ t('no_projects') }}</p>
                     </div>
                     {% endif %}
                 </div>
                 <!-- No Results State Project -->
                 <div id="no-projects" class="hidden glass-card p-8 text-center rounded-xl">
-                    <p class="text-slate-500 text-sm">Tidak ada proyek yang cocok.</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">No matching projects.</p>
                 </div>
             </div>
 
             <!-- Recent Documents / Library -->
             <div class="flex flex-col h-full">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i>
-                        Arsip Dokumen</h3>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white"><i
+                            class="fa-solid fa-file-pdf text-red-500 mr-2"></i>
+                        {{ t('doc_archive') }}</h3>
                 </div>
 
-                <div class="glass-card rounded-xl overflow-hidden p-2 bg-white/50 flex-1 min-h-[400px]">
+                <div
+                    class="glass-card rounded-xl overflow-hidden p-2 bg-white/50 dark:bg-slate-800/50 flex-1 min-h-[400px]">
                     <div class="overflow-y-auto max-h-[600px] h-full pr-1 custom-scrollbar">
                         {% if all_docs %}
                         <ul id="documents-list" class="space-y-1">
                             {% for doc in all_docs %}
-                            <li class="searchable-item p-3 hover:bg-white rounded-lg transition flex items-center gap-3 group relative"
+                            <li class="searchable-item p-3 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition flex items-center gap-3 group relative"
                                 data-name="{{ doc.filename|lower }}" data-date="{{ doc.uploaded_at.timestamp() }}">
                                 <div
-                                    class="h-10 w-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center flex-shrink-0 text-lg shadow-sm">
+                                    class="h-10 w-10 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-lg flex items-center justify-center flex-shrink-0 text-lg shadow-sm">
                                     <i class="fa-solid fa-file-pdf"></i>
                                 </div>
                                 <div class="flex-1 min-w-0 pr-8">
-                                    <p id="doc-name-{{ doc.id }}" class="text-sm font-bold text-slate-700 truncate"
+                                    <p id="doc-name-{{ doc.id }}"
+                                        class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate"
                                         title="{{ doc.filename }}">{{ doc.filename }}</p>
                                     <p class="text-[10px] text-slate-400 mt-0.5">{{ doc.uploaded_at.strftime('%d/%m/%Y')
                                         }} • PDF</p>
                                 </div>
                                 <!-- Actions -->
                                 <div
-                                    class="absolute right-3 opacity-0 group-hover:opacity-100 flex gap-2 transition bg-white/80 p-1 rounded-lg backdrop-blur-sm">
+                                    class="absolute right-3 opacity-0 group-hover:opacity-100 flex gap-2 transition bg-white/80 dark:bg-slate-800/80 p-1 rounded-lg backdrop-blur-sm">
                                     <button
                                         onclick="renameDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
-                                        class="text-slate-400 hover:text-indigo-600 transition p-1" title="Ganti Nama">
+                                        class="text-slate-400 hover:text-indigo-600 transition p-1"
+                                        title="{{ t('rename_doc') }}">
                                         <i class="fa-solid fa-pen text-xs"></i>
                                     </button>
                                     <button
                                         onclick="deleteDoc({{ doc.id }}, '{{ doc.filename | replace("'", "\\'") }}')"
-                                        class="text-slate-400 hover:text-red-600 transition p-1" title="Hapus Dokumen">
+                                        class="text-slate-400 hover:text-red-600 transition p-1"
+                                        title="{{ t('delete') }}">
                                         <i class="fa-solid fa-trash text-xs"></i>
                                     </button>
                                 </div>
@@ -402,14 +406,15 @@
                         </ul>
                         <!-- No Results State Docs -->
                         <div id="no-docs" class="hidden p-8 text-center">
-                            <p class="text-slate-400 text-xs">Tidak ada dokumen yang cocok.</p>
+                            <p class="text-slate-400 text-xs">No matching documents.</p>
                         </div>
                         {% else %}
                         <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
                             <i class="fa-solid fa-cloud-arrow-up text-3xl mb-3 opacity-50"></i>
-                            <p class="text-sm">Belum ada dokumen.</p>
+                            <p class="text-sm">{{ t('no_docs') }}</p>
                             <button onclick="toggleModal('upload-modal')"
-                                class="text-indigo-600 font-bold text-xs mt-2 hover:underline">Upload Sekarang</button>
+                                class="text-indigo-600 dark:text-indigo-400 font-bold text-xs mt-2 hover:underline">{{
+                                t('upload_now') }}</button>
                         </div>
                         {% endif %}
                     </div>
@@ -417,498 +422,436 @@
             </div>
         </div>
 
-    </main>
-
-    <!-- Create Project Modal -->
-    <div id="project-modal"
-        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
-
-        <div
-            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-[90vh]">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold text-slate-800">Mulai Proyek Baru</h3>
-                    <button onclick="toggleModal('project-modal')" class="text-slate-400 hover:text-slate-600"><i
-                            class="fa-solid fa-times text-xl"></i></button>
-                </div>
-
-                <form onsubmit="createProject(event)">
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Nama Proyek / Bab</label>
-                        <input type="text" id="project-title"
-                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
-                            placeholder="Contoh: Bab 2 Tinjauan Pustaka" required>
+        <!-- Rename Document Modal (NEW) -->
+        <div id="rename-modal"
+            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+            <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+            <div
+                class="modal-container bg-white dark:bg-slate-800 w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-100 duration-300">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ t('rename_doc') }}
+                        </h3>
+                        <button onclick="toggleModal('rename-modal')" class="text-slate-400 hover:text-slate-600"><i
+                                class="fa-solid fa-times text-xl"></i></button>
                     </div>
-
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Dokumen Referensi</label>
-                        <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50">
-                            {% if all_docs %}
-                            {% for doc in all_docs %}
-                            <label
-                                class="flex items-center space-x-3 p-2 hover:bg-indigo-50 rounded-lg cursor-pointer transition">
-                                <input type="checkbox" name="doc_ids" value="{{ doc.id }}"
-                                    class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
-                                <span class="text-sm text-slate-700 truncate">{{ doc.filename }}</span>
-                            </label>
-                            {% endfor %}
-                            {% else %}
-                            <p class="text-xs text-slate-400 p-2">Belum ada dokumen. Upload dulu di halaman Chat.</p>
-                            {% endif %}
+                    <form onsubmit="submitRename(event)">
+                        <input type="hidden" id="rename-doc-id">
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{{
+                                t('new_name') }}</label>
+                            <input type="text" id="rename-doc-input"
+                                class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                required>
                         </div>
-                        <p class="text-xs text-slate-400 mt-2"><i class="fa-solid fa-info-circle"></i> AI hanya akan
-                            menjawab berdasarkan dokumen yang dipilih.</p>
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="toggleModal('project-modal')"
-                            class="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition">Batal</button>
-                        <button type="submit"
-                            class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">Buat
-                            Proyek</button>
-                    </div>
-                </form>
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="toggleModal('rename-modal')"
+                                class="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition">{{
+                                t('cancel') }}</button>
+                            <button type="submit"
+                                class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">{{
+                                t('save') }}</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Upload Document Modal -->
-    <div id="upload-modal"
-        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
-
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-slate-800">Upload Referensi</h3>
-                    <button onclick="toggleModal('upload-modal')" class="text-slate-400 hover:text-slate-600"><i
-                            class="fa-solid fa-times text-xl"></i></button>
+        <!-- Confirm Delete Modal (Fixed) -->
+        <div id="delete-confirm-modal"
+            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+            <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
+            <div class="modal-container bg-white dark:bg-slate-800 w-11/12 md:max-w-sm mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all duration-300"
+                id="delete-modal-content">
+                <div class="p-6 text-center">
+                    <div
+                        class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                        <i class="fa-solid fa-triangle-exclamation text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white" id="delete-modal-title">{{
+                        t('delete_doc') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2" id="delete-modal-desc">{{
+                        t('delete_confirm_desc') }}</p>
                 </div>
-
-                <form onsubmit="uploadDocument(event)">
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Pilih File PDF</label>
-                        <div
-                            class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition relative">
-                            <input type="file" id="file-upload" accept=".pdf"
-                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
-                            <div class="pointer-events-none">
-                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-                                <p class="text-sm text-slate-500 font-medium" id="file-label">Klik atau drag file ke
-                                    sini</p>
-                                <p class="text-[10px] text-slate-400 mt-1">Hanya file PDF (Max 10MB)</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Progress Bar (Hidden by default) -->
-                    <div id="upload-progress" class="hidden mb-6">
-                        <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
-                            <span>Processing...</span>
-                            <span id="progress-text">0%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                                style="width: 0%"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-400 mt-1 italic">Sedang membaca dan mengindeks isi dokumen...
-                        </p>
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="toggleModal('upload-modal')"
-                            class="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition">Batal</button>
-                        <button type="submit" id="btn-upload"
-                            class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">Upload</button>
-                    </div>
-                </form>
+                <div class="bg-gray-50 dark:bg-slate-700/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                    <button type="button" id="confirm-delete-btn"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 modal-danger-btn text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        {{ t('delete') }}
+                    </button>
+                    <button type="button" onclick="toggleModal('delete-confirm-modal')"
+                        class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        {{ t('cancel') }}
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Rename Document Modal (NEW) -->
-    <div id="rename-modal"
-        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
-        <div
-            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all scale-100 duration-300">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-slate-800">Ganti Nama Dokumen</h3>
-                    <button onclick="toggleModal('rename-modal')" class="text-slate-400 hover:text-slate-600"><i
-                            class="fa-solid fa-times text-xl"></i></button>
-                </div>
-                <form onsubmit="submitRename(event)">
-                    <input type="hidden" id="rename-doc-id">
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Nama Baru</label>
-                        <input type="text" id="rename-doc-input"
-                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
-                            required>
-                    </div>
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="toggleModal('rename-modal')"
-                            class="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition">Batal</button>
-                        <button type="submit"
-                            class="premium-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-lg">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
 
-    <!-- Confirm Delete Modal (Fixed) -->
-    <div id="delete-confirm-modal"
-        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-sm mx-auto rounded-2xl shadow-2xl z-50 overflow-hidden transform transition-all duration-300"
-            id="delete-modal-content">
-            <div class="p-6 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                    <i class="fa-solid fa-triangle-exclamation text-red-600 text-xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-900" id="delete-modal-title">Hapus Dokumen?</h3>
-                <p class="text-sm text-slate-500 mt-2" id="delete-modal-desc">Dokumen ini akan dihapus permanen dan
-                    tidak bisa dikembalikan.</p>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                <button type="button" id="confirm-delete-btn"
-                    class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 modal-danger-btn text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                    Hapus
-                </button>
-                <button type="button" onclick="toggleModal('delete-confirm-modal')"
-                    class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Batal
-                </button>
-            </div>
-        </div>
-    </div>
+        <script>
+            // --- Theme & Language Logic ---
+            function toggleTheme() {
+                const html = document.documentElement;
+                html.classList.toggle('dark');
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
+                const isDark = html.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
-    <script>
-        function toggleModal(modalID) {
-            const modal = document.getElementById(modalID);
-            modal.classList.toggle('opacity-0');
-            modal.classList.toggle('pointer-events-none');
-            document.body.classList.toggle('modal-active');
-        }
-
-        // --- Search Functionality ---
-        function filterDashboard() {
-            const query = document.getElementById('dashboard-search').value.toLowerCase();
-            const items = document.querySelectorAll('.searchable-item');
-
-            let hasProjects = false;
-            let hasDocs = false;
-
-            items.forEach(item => {
-                const name = item.getAttribute('data-name');
-                if (name.includes(query)) {
-                    item.classList.remove('hidden');
-                    if (item.closest('#projects-container')) hasProjects = true;
-                    if (item.closest('#documents-list')) hasDocs = true;
+                const icon = document.getElementById('theme-icon');
+                if (isDark) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
                 } else {
-                    item.classList.add('hidden');
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
                 }
-            });
-
-            // Handle Empty States
-            const noProjects = document.getElementById('no-projects');
-            const noDocs = document.getElementById('no-docs');
-            const projectsContainer = document.getElementById('projects-container');
-            const docsList = document.getElementById('documents-list');
-
-            if (projectsContainer && projectsContainer.querySelectorAll('.searchable-item').length > 0) {
-                if (noProjects) noProjects.classList.toggle('hidden', hasProjects);
             }
-            if (docsList && docsList.querySelectorAll('.searchable-item').length > 0) {
-                if (noDocs) noDocs.classList.toggle('hidden', hasDocs);
+
+            function changeLang(lang) {
+                // Simple reload with query param for now, could be improved with cookies
+                const url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                // Also set cookie
+                document.cookie = `lang=${lang}; path=/; max-age=31536000`;
+                window.location.href = url.toString();
             }
-        }
 
-        // --- Sorting Functionality ---
-        function sortItems() {
-            const criteria = document.getElementById('sort-select').value;
-            sortContainer('projects-container', criteria);
-            const docList = document.getElementById('documents-list');
-            if (docList) sortContainer('documents-list', criteria);
-        }
+            // Init Theme
+            (function () {
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        function sortContainer(containerId, criteria) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                    const icon = document.getElementById('theme-icon');
+                    if (icon) {
+                        icon.classList.remove('fa-moon');
+                        icon.classList.add('fa-sun');
+                    }
+                }
+            })();
 
-            const items = Array.from(container.querySelectorAll('.searchable-item'));
+            function toggleModal(modalID) {
+                const modal = document.getElementById(modalID);
+                modal.classList.toggle('opacity-0');
+                modal.classList.toggle('pointer-events-none');
+                document.body.classList.toggle('modal-active');
+            }
 
-            items.sort((a, b) => {
-                const dateA = parseFloat(a.getAttribute('data-date'));
-                const dateB = parseFloat(b.getAttribute('data-date'));
-                const nameA = a.getAttribute('data-name');
-                const nameB = b.getAttribute('data-name');
+            // --- Search Functionality ---
+            function filterDashboard() {
+                const query = document.getElementById('dashboard-search').value.toLowerCase();
+                const items = document.querySelectorAll('.searchable-item');
 
-                if (criteria === 'newest') return dateB - dateA;
-                if (criteria === 'oldest') return dateA - dateB;
-                if (criteria === 'name') return nameA.localeCompare(nameB);
-                return 0;
-            });
+                let hasProjects = false;
+                let hasDocs = false;
 
-            items.forEach(item => container.appendChild(item));
-        }
-
-        async function createProject(e) {
-            e.preventDefault();
-            const title = document.getElementById('project-title').value;
-            const checkboxes = document.querySelectorAll('input[name="doc_ids"]:checked');
-            const docIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
-
-            try {
-                const response = await fetch('/create_session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, doc_ids: docIds })
+                items.forEach(item => {
+                    const name = item.getAttribute('data-name');
+                    if (name.includes(query)) {
+                        item.classList.remove('hidden');
+                        if (item.closest('#projects-container')) hasProjects = true;
+                        if (item.closest('#documents-list')) hasDocs = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('current_session_id', data.session_id);
-                    localStorage.setItem('current_session_title', title);
-                    window.location.href = '/chat';
-                } else {
-                    alert('Gagal membuat proyek');
+                // Handle Empty States
+                const noProjects = document.getElementById('no-projects');
+                const noDocs = document.getElementById('no-docs');
+                const projectsContainer = document.getElementById('projects-container');
+                const docsList = document.getElementById('documents-list');
+
+                if (projectsContainer && projectsContainer.querySelectorAll('.searchable-item').length > 0) {
+                    if (noProjects) noProjects.classList.toggle('hidden', hasProjects);
                 }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan');
+                if (docsList && docsList.querySelectorAll('.searchable-item').length > 0) {
+                    if (noDocs) noDocs.classList.toggle('hidden', hasDocs);
+                }
             }
-        }
 
-        // New Rename Logic with Modal
-        function renameDoc(docId, currentName) {
-            document.getElementById('rename-doc-id').value = docId;
-            document.getElementById('rename-doc-input').value = currentName;
-            toggleModal('rename-modal');
-        }
+            // --- Sorting Functionality ---
+            function sortItems() {
+                const criteria = document.getElementById('sort-select').value;
+                sortContainer('projects-container', criteria);
+                const docList = document.getElementById('documents-list');
+                if (docList) sortContainer('documents-list', criteria);
+            }
 
-        async function submitRename(e) {
-            e.preventDefault();
-            const docId = document.getElementById('rename-doc-id').value;
-            const newName = document.getElementById('rename-doc-input').value;
+            function sortContainer(containerId, criteria) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
 
-            // Basic UI lock
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerText;
-            btn.innerText = "Saving...";
-            btn.disabled = true;
+                const items = Array.from(container.querySelectorAll('.searchable-item'));
 
-            try {
-                const res = await fetch(`/document/${docId}/rename`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: newName })
+                items.sort((a, b) => {
+                    const dateA = parseFloat(a.getAttribute('data-date'));
+                    const dateB = parseFloat(b.getAttribute('data-date'));
+                    const nameA = a.getAttribute('data-name');
+                    const nameB = b.getAttribute('data-name');
+
+                    if (criteria === 'newest') return dateB - dateA;
+                    if (criteria === 'oldest') return dateA - dateB;
+                    if (criteria === 'name') return nameA.localeCompare(nameB);
+                    return 0;
                 });
 
-                if (res.ok) {
-                    // Update UI
-                    const nameEl = document.getElementById(`doc-name-${docId}`);
-                    if (nameEl) nameEl.innerText = newName;
-
-                    // Update data-name attribute
-                    const listItem = nameEl.closest('.searchable-item');
-                    if (listItem) listItem.setAttribute('data-name', newName.toLowerCase());
-
-                    showToast('Nama dokumen diperbarui!', 'success');
-                    toggleModal('rename-modal');
-                } else {
-                    showToast("Gagal mengubah nama.", 'error');
-                }
-            } catch (e) {
-                console.error(e);
-                showToast("Kesalahan koneksi.", 'error');
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
+                items.forEach(item => container.appendChild(item));
             }
-        }
 
-        // UI Helpers
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
+            async function createProject(e) {
+                e.preventDefault();
+                const title = document.getElementById('project-title').value;
+                const checkboxes = document.querySelectorAll('input[name="doc_ids"]:checked');
+                const docIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
-            let icon = 'fa-info-circle';
-            if (type === 'success') icon = 'fa-check-circle';
-            if (type === 'error') icon = 'fa-exclamation-circle';
+                try {
+                    const response = await fetch('/create_session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, doc_ids: docIds })
+                    });
 
-            toast.innerHTML = `
+                    if (response.ok) {
+                        const data = await response.json();
+                        localStorage.setItem('current_session_id', data.session_id);
+                        localStorage.setItem('current_session_title', title);
+                        window.location.href = '/chat';
+                    } else {
+                        alert('Gagal membuat proyek');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Terjadi kesalahan');
+                }
+            }
+
+            // New Rename Logic with Modal
+            function renameDoc(docId, currentName) {
+                document.getElementById('rename-doc-id').value = docId;
+                document.getElementById('rename-doc-input').value = currentName;
+                toggleModal('rename-modal');
+            }
+
+            async function submitRename(e) {
+                e.preventDefault();
+                const docId = document.getElementById('rename-doc-id').value;
+                const newName = document.getElementById('rename-doc-input').value;
+
+                // Basic UI lock
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerText;
+                btn.innerText = "Saving...";
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`/document/${docId}/rename`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: newName })
+                    });
+
+                    if (res.ok) {
+                        // Update UI
+                        const nameEl = document.getElementById(`doc-name-${docId}`);
+                        if (nameEl) nameEl.innerText = newName;
+
+                        // Update data-name attribute
+                        const listItem = nameEl.closest('.searchable-item');
+                        if (listItem) listItem.setAttribute('data-name', newName.toLowerCase());
+
+                        showToast('Nama dokumen diperbarui!', 'success');
+                        toggleModal('rename-modal');
+                    } else {
+                        showToast("Gagal mengubah nama.", 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showToast("Kesalahan koneksi.", 'error');
+                } finally {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            // UI Helpers
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+
+                let icon = 'fa-info-circle';
+                if (type === 'success') icon = 'fa-check-circle';
+                if (type === 'error') icon = 'fa-exclamation-circle';
+
+                toast.innerHTML = `
                 <i class="fa-solid ${icon} text-lg"></i>
                 <span class="font-medium text-sm flex-1">${message}</span>
                 <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-times"></i></button>
             `;
 
-            container.appendChild(toast);
+                container.appendChild(toast);
 
-            // Animate In
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
+                // Animate In
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                // Auto Dismiss
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            let docIdToDelete = null;
+
+            function deleteDoc(docId, docName) {
+                docIdToDelete = docId;
+                document.getElementById('delete-modal-title').innerText = `Hapus "${docName}"?`;
+                toggleModal('delete-confirm-modal');
+            }
+
+            document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+                if (!docIdToDelete) return;
+
+                const btn = document.getElementById('confirm-delete-btn');
+                const originalText = btn.innerText;
+                btn.disabled = true;
+                btn.innerText = "Processing...";
+
+                try {
+                    const res = await fetch(`/document/${docIdToDelete}/delete`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    toggleModal('delete-confirm-modal');
+
+                    if (res.ok) {
+                        showToast('Dokumen berhasil dihapus', 'success');
+                        // Remove from UI immediately without reload if possible, or reload
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        const data = await res.json();
+                        showToast("Gagal: " + (data.error || 'Unknown error'), 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    toggleModal('delete-confirm-modal'); // Close modal on error too
+                    showToast('Terjadi kesalahan koneksi', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    docIdToDelete = null;
+                }
             });
 
-            // Auto Dismiss
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        let docIdToDelete = null;
-
-        function deleteDoc(docId, docName) {
-            docIdToDelete = docId;
-            document.getElementById('delete-modal-title').innerText = `Hapus "${docName}"?`;
-            toggleModal('delete-confirm-modal');
-        }
-
-        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-            if (!docIdToDelete) return;
-
-            const btn = document.getElementById('confirm-delete-btn');
-            const originalText = btn.innerText;
-            btn.disabled = true;
-            btn.innerText = "Processing...";
-
-            try {
-                const res = await fetch(`/document/${docIdToDelete}/delete`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                toggleModal('delete-confirm-modal');
-
-                if (res.ok) {
-                    showToast('Dokumen berhasil dihapus', 'success');
-                    // Remove from UI immediately without reload if possible, or reload
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    const data = await res.json();
-                    showToast("Gagal: " + (data.error || 'Unknown error'), 'error');
-                }
-            } catch (e) {
-                console.error(e);
-                toggleModal('delete-confirm-modal'); // Close modal on error too
-                showToast('Terjadi kesalahan koneksi', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = originalText;
-                docIdToDelete = null;
+            async function updateProgress(stage) {
+                try {
+                    const res = await fetch('/update_progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stage: stage })
+                    });
+                    if (res.ok) {
+                        showToast('Progress diperbarui!', 'success');
+                        setTimeout(() => window.location.reload(), 500);
+                    } else {
+                        showToast("Gagal update progress", 'error');
+                    }
+                } catch (e) { console.error(e); }
             }
-        });
 
-        async function updateProgress(stage) {
-            try {
-                const res = await fetch('/update_progress', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stage: stage })
-                });
-                if (res.ok) {
-                    showToast('Progress diperbarui!', 'success');
-                    setTimeout(() => window.location.reload(), 500);
-                } else {
-                    showToast("Gagal update progress", 'error');
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function openSession(sessionId) {
-            // Need to fetch title or pass it in. For now, we trust the ID load.
-            // Ideally we also fetch title to update localStorage or rely on Chat Page to catch up.
-            localStorage.setItem('current_session_id', sessionId);
-            // We can't easily get title here without traversing DOM or making request. 
-            // We'll let Chat page handle "Loading..." then fetching title if possible,
-            // OR we can pass title in arguments.
-            window.location.href = '/chat';
-        }
-
-        // File Input Label Update
-        document.getElementById('file-upload')?.addEventListener('change', function (e) {
-            const fileName = e.target.files[0]?.name;
-            if (fileName) {
-                document.getElementById('file-label').innerText = fileName;
-                document.getElementById('file-label').classList.add('text-indigo-600');
+            function openSession(sessionId) {
+                // Need to fetch title or pass it in. For now, we trust the ID load.
+                // Ideally we also fetch title to update localStorage or rely on Chat Page to catch up.
+                localStorage.setItem('current_session_id', sessionId);
+                // We can't easily get title here without traversing DOM or making request. 
+                // We'll let Chat page handle "Loading..." then fetching title if possible,
+                // OR we can pass title in arguments.
+                window.location.href = '/chat';
             }
-        });
 
-        async function uploadDocument(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('file-upload');
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // UI Updates
-            const btn = document.getElementById('btn-upload');
-            const progressDiv = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('progress-bar');
-
-            btn.disabled = true;
-            btn.innerText = "Mengupload...";
-            progressDiv.classList.remove('hidden');
-
-            // Simulate progress for UX (since fetch doesn't give upload progress easily without XHR)
-            let progress = 0;
-            const interval = setInterval(() => {
-                if (progress < 90) {
-                    progress += 10;
-                    progressBar.style.width = `${progress}%`;
-                    document.getElementById('progress-text').innerText = `${progress}%`;
+            // File Input Label Update
+            document.getElementById('file-upload')?.addEventListener('change', function (e) {
+                const fileName = e.target.files[0]?.name;
+                if (fileName) {
+                    document.getElementById('file-label').innerText = fileName;
+                    document.getElementById('file-label').classList.add('text-indigo-600');
                 }
-            }, 500);
+            });
 
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+            async function uploadDocument(e) {
+                e.preventDefault();
+                const fileInput = document.getElementById('file-upload');
+                const file = fileInput.files[0];
+                if (!file) return;
 
-                clearInterval(interval);
+                const formData = new FormData();
+                formData.append('file', file);
 
-                if (response.ok) {
-                    progressBar.style.width = '100%';
-                    document.getElementById('progress-text').innerText = '100%';
-                    btn.innerText = "Selesai!";
+                // UI Updates
+                const btn = document.getElementById('btn-upload');
+                const progressDiv = document.getElementById('upload-progress');
+                const progressBar = document.getElementById('progress-bar');
 
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    const data = await response.json();
-                    alert('Gagal upload: ' + (data.error || 'Unknown error'));
+                btn.disabled = true;
+                btn.innerText = "Mengupload...";
+                progressDiv.classList.remove('hidden');
+
+                // Simulate progress for UX (since fetch doesn't give upload progress easily without XHR)
+                let progress = 0;
+                const interval = setInterval(() => {
+                    if (progress < 90) {
+                        progress += 10;
+                        progressBar.style.width = `${progress}%`;
+                        document.getElementById('progress-text').innerText = `${progress}%`;
+                    }
+                }, 500);
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    clearInterval(interval);
+
+                    if (response.ok) {
+                        progressBar.style.width = '100%';
+                        document.getElementById('progress-text').innerText = '100%';
+                        btn.innerText = "Selesai!";
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        const data = await response.json();
+                        alert('Gagal upload: ' + (data.error || 'Unknown error'));
+                        resetUploadUI();
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Terjadi kesalahan koneksi');
                     resetUploadUI();
                 }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan koneksi');
-                resetUploadUI();
             }
-        }
 
-        function resetUploadUI() {
-            const btn = document.getElementById('btn-upload');
-            const progressDiv = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('progress-bar');
+            function resetUploadUI() {
+                const btn = document.getElementById('btn-upload');
+                const progressDiv = document.getElementById('upload-progress');
+                const progressBar = document.getElementById('progress-bar');
 
-            if (window.uploadInterval) clearInterval(window.uploadInterval);
-            btn.disabled = false;
-            btn.innerText = "Upload";
-            progressDiv.classList.add('hidden');
-            if (progressBar) progressBar.style.width = '0%';
-        }
-    </script>
+                if (window.uploadInterval) clearInterval(window.uploadInterval);
+                btn.disabled = false;
+                btn.innerText = "Upload";
+                progressDiv.classList.add('hidden');
+                if (progressBar) progressBar.style.width = '0%';
+            }
+        </script>
 
 </body>
 
