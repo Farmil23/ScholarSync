@@ -865,17 +865,7 @@ def get_history():
         })
     return jsonify(output)
 
-@app.route('/session/<int:session_id>/rename', methods=['PUT'])
-@login_required
-def rename_session(session_id):
-    chat_session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first_or_404()
-    data = request.json
-    new_title = data.get('title')
-    if new_title:
-        chat_session.title = new_title
-        db.session.commit()
-        return jsonify({'message': 'Session renamed'})
-    return jsonify({'error': 'No title provided'}), 400
+
 
 @app.route('/document/<int:doc_id>/rename', methods=['PUT'])
 @login_required
