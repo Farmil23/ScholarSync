@@ -71,9 +71,18 @@
 
             <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mt-6 mb-2">Account</p>
             <a href="/logout"
-                class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-400 hover:bg-red-500/10 transition-all">
+                class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
                 <i class="fa-solid fa-sign-out-alt w-6"></i> Logout
             </a>
+
+            <p class="px-4 text-xs font-bold text-red-500 uppercase tracking-wider mt-6 mb-2">Danger Zone</p>
+            <form action="/admin/reset-system" method="POST"
+                onsubmit="return confirm('WARNING: This will wipe ALL user data (documents, chats, logs). Only THIS Admin account will remain. This cannot be undone. Are you sure?');">
+                <button type="submit"
+                    class="w-full nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all text-left">
+                    <i class="fa-solid fa-trash-can w-6"></i> Reset System
+                </button>
+            </form>
         </nav>
 
         <div class="p-4 border-t border-slate-700/50">

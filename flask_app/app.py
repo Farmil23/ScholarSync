@@ -977,6 +977,39 @@ def admin_dashboard():
 
     return render_template('admin.html', stats=stats, recent_logs=recent_logs, monthly_data=monthly_data)
 
+@app.route('/admin/reset-system', methods=['POST'])
+@login_required
+def reset_system():
+    if not current_user.is_admin:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        # 1. Delete Dependencies first (Logs, Messages)
+        ActivityLog.query.delete()
+        ChatMessage.query.delete()
+        
+        # 2. Delete Main Content (Sessions, Docs)
+        # Note: session_documents association table rows are usually deleted via cascade if configured,
+        # otherwise we might fail. Let's try deleting sessions first.
+        ChatSession.query.delete()
+        Document.query.delete()
+        
+        # 3. Delete Users (except current admin)
+        User.query.filter(User.id != current_user.id).delete()
+        
+        # 4. Reset Current Admin Stats
+        current_user.thesis_stage = 0
+        
+        db.session.commit()
+        flash('SYSTEM RESET SUCCESSFUL: All users, documents, and logs have been deleted.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Reset Error: {e}")
+        flash(f'Reset Failed: {e}', 'danger')
+        
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/export_logs')
 @login_required
 def export_logs():
@@ -1010,4 +1043,17 @@ if __name__ == '__main__':
     with app.app_context():
         # Ensure migration for new table
         db.create_all()
+        
+        # Create Default Admin if not exists
+        try:
+            if not User.query.filter_by(username='admin').first():
+                print("Auto-creating default admin...")
+                hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
+                admin = User(username='admin', email='admin@scholarsync.com', password=hashed_password, is_admin=True)
+                db.session.add(admin)
+                db.session.commit()
+                print("Default admin created.")
+        except Exception as e:
+            print(f"Admin creation failed (might be connection issue): {e}")
+            
     app.run(debug=True, port=8501)
