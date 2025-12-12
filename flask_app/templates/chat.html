@@ -602,7 +602,7 @@
                                     // Finished
                                     // Process Citations (make [[...]] clickable)
                                     const citationRegex = /\[\[(.*?)(?:\|(\d+))?\]\]/g;
-                                    contentDiv.innerHTML = contentDiv.innerHTML.replace(citationRegex, (match, filename, page) => {
+                                    bubble.innerHTML = bubble.innerHTML.replace(citationRegex, (match, filename, page) => {
                                         const pageNum = page || 1;
                                         return `<button onclick="openPdfViewer('${filename}', ${pageNum})" 
                                             class="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-slate-700 border border-indigo-200 dark:border-slate-600 hover:bg-indigo-100 dark:hover:bg-slate-600 transition align-middle cursor-pointer" title="Open PDF Page ${pageNum}">
