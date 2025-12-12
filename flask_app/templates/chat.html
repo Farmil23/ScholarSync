@@ -452,6 +452,7 @@
         }
 
         // 4. Send Message Interaction
+        // 4. Send Message Interaction (Streaming Support)
         async function sendMessage(e) {
             e.preventDefault();
             const input = document.getElementById('user-input');
@@ -487,23 +488,81 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: message,
-                        session_id: currentSessionId // Pass session ID!
+                        session_id: currentSessionId
                     })
                 });
 
-                const data = await response.json();
-
-                document.getElementById('thinking-indicator').remove();
-
-                if (data.error) {
-                    appendMessage('ai', "Error: " + data.error);
-                } else {
-                    appendMessage('ai', data.answer, data.context);
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
                 }
+
+                // Remove thinking indicator immediately once stream starts (or when we have first token)
+                // For better UX, let's remove it now and replace with empty bubble
+                thinkingDiv.remove();
+
+                // Create placeholder for AI response
+                // We use appendMessage but with empty text to get the DOM element
+                const msgDiv = appendMessage('ai', '');
+                // Find the content container (.prose)
+                const contentDiv = msgDiv.querySelector('.prose');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+
+                    const parts = buffer.split('\n\n');
+                    // Keep the last part (it might be incomplete)
+                    buffer = parts.pop();
+
+                    for (const part of parts) {
+                        if (part.startsWith('data: ')) {
+                            try {
+                                const jsonStr = part.replace('data: ', '');
+                                if (!jsonStr.trim()) continue;
+
+                                const data = JSON.parse(jsonStr);
+
+                                if (data.token) {
+                                    fullText += data.token;
+                                    // Live Render Markdown
+                                    contentDiv.innerHTML = marked.parse(fullText);
+                                    historyContainer.scrollTop = historyContainer.scrollHeight;
+                                } else if (data.error) {
+                                    fullText += "\n\n*Error: " + data.error + "*";
+                                    contentDiv.innerHTML = marked.parse(fullText);
+                                } else if (data.done) {
+                                    // Finished
+                                    // Process Citations (make [[...]] clickable)
+                                    const citationRegex = /\[\[(.*?)(?:\|(\d+))?\]\]/g;
+                                    contentDiv.innerHTML = contentDiv.innerHTML.replace(citationRegex, (match, filename, page) => {
+                                        const pageNum = page || 1;
+                                        return `<button onclick="openPdfViewer('${filename}', ${pageNum})" 
+                                            class="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-slate-700 border border-indigo-200 dark:border-slate-600 hover:bg-indigo-100 dark:hover:bg-slate-600 transition align-middle cursor-pointer" title="Open PDF Page ${pageNum}">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                            <span class="truncate max-w-[100px]">${filename}</span>
+                                            <span class="bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-100 px-1 rounded text-[10px]">P.${pageNum}</span>
+                                        </button>`;
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("Error parsing chat stream:", e);
+                            }
+                        }
+                    }
+                }
+
             } catch (error) {
                 const indicator = document.getElementById('thinking-indicator');
                 if (indicator) indicator.remove();
-                appendMessage('ai', "Maaf, koneksi terputus. Silakan coba lagi.");
+                appendMessage('ai', "Maaf, koneksi atau sistem mengalami gangguan. (" + error.message + ")");
             }
         }
 

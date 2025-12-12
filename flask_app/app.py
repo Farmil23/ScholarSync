@@ -4,10 +4,13 @@ import uuid
 import csv
 import io
 import json
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file, Response
+from datetime import datetime
+import queue
+import threading
+from langchain_core.callbacks import BaseCallbackHandler
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file, Response, stream_with_context
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
-from datetime import datetime
 
 # LangChain Imports
 from langchain_classic.agents import AgentExecutor, create_react_agent
@@ -618,6 +621,15 @@ def get_session_details(session_id):
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
+    # Setup Queue and Sentinel
+    q = queue.Queue()
+    job_done = object()
+
+    # Callback Handler
+    class QueueCallback(BaseCallbackHandler):
+        def on_llm_new_token(self, token: str, **kwargs):
+            q.put(token)
+
     try:
         data = request.json
         user_input = data.get('message')
@@ -645,54 +657,88 @@ def chat():
             role_marker = "User" if msg.role == 'user' else "AI"
             history_str += f"{role_marker}: {msg.content}\n"
                 
-        # 3. Invoke Agent
-        # Fetch valid filenames to prevent hallucinations
-        # CRITICAL: Filter by the documents SPECIFICALLY associated with this chat session.
-        # If the session has documents, ONLY use those.
-        # If the session has NO documents, maybe allow all? Or strictly none? 
-        # The user requested "kekhususan suatu chat" (specificity of a chat), implying strict isolation.
-        
+        # 3. Save User Message to DB immediately
+        user_msg_db = ChatMessage(session_id=chat_session.id, role='user', content=user_input)
+        db.session.add(user_msg_db)
+        db.session.commit()
+
+        # 4. Prepare Agent
         session_docs = chat_session.documents
         if session_docs:
             doc_names = [d.filename for d in session_docs]
             print(f"🔒 Context Isolated to Session Docs: {doc_names}")
         else:
-            # Fallback: If no docs linked, use all user docs (or empty list if strict mode desired)
-            # For now, let's keep it safe: if no docs linked, maybe general request?
             user_docs = Document.query.filter_by(user_id=current_user.id).all()
             doc_names = [d.filename for d in user_docs]
             print(f"🔓 No session docs linked. Fallback to all {len(doc_names)} user docs.")
         
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
-        try:
-            response = executor.invoke({
-                "input": user_input,
-                "chat_history": history_str
-            })
-            answer = response["output"]
-            
-            # Post-process for "Smart Citation"
-            # (In a real app, strict JSON parsing or Regex would extract citations)
-            
-        except Exception as e:
-            print(f"Agent Execution Error: {e}")
-            answer = f"Maaf, ada kendala teknis: {str(e)}"
+        # 5. Run Agent in Thread
+        def task():
+            try:
+                response = executor.invoke(
+                    {
+                        "input": user_input,
+                        "chat_history": history_str
+                    },
+                    config={"callbacks": [QueueCallback()]}
+                )
+                # Put the full result context in queue to be saved later
+                q.put({'type': 'result', 'data': response})
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                q.put({'type': 'error', 'data': str(e)})
+            finally:
+                q.put(job_done)
 
-        # 4. Save to DB
-        user_msg_db = ChatMessage(session_id=chat_session.id, role='user', content=user_input)
-        ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=answer, citations=json.dumps([]))
+        t = threading.Thread(target=task)
+        t.start()
         
-        db.session.add(user_msg_db)
-        db.session.add(ai_msg_db)
-        db.session.commit()
-        
-        log_activity(current_user.id, 'chat')
-        
-        return jsonify({
-            'answer': answer,
-            'context': [] 
-        })
+        # 6. Stream Generator
+        def generate():
+            full_streamed_content = "" # For tracking what was sent (optional)
+            final_answer = "" # To be saved in DB
+            
+            while True:
+                item = q.get()
+                if item is job_done:
+                    break
+                
+                if isinstance(item, dict):
+                    if item.get('type') == 'result':
+                        # Valid Result -> Extract output for DB
+                        final_answer = item['data'].get('output', '')
+                    elif item.get('type') == 'error':
+                        # Send error to frontend
+                        yield f"data: {json.dumps({'error': item['data']})}\n\n"
+                        final_answer = f"Error: {item['data']}"
+                else:
+                    # Token
+                    token = item
+                    full_streamed_content += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+            
+            # Post-Streaming: Save AI Message to DB
+            # Use final_answer from tool if available, else streamed content
+            content_to_save = final_answer if final_answer else full_streamed_content
+            
+            if content_to_save:
+                # We need application context if not present, but stream_with_context handles request context? 
+                # Actually, stream_with_context keeps the request context active.
+                try:
+                    ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=content_to_save, citations=json.dumps([]))
+                    db.session.add(ai_msg_db)
+                    db.session.commit()
+                    log_activity(current_user.id, 'chat')
+                except Exception as db_e:
+                    print(f"DB Save Error: {db_e}")
+            
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
     except Exception as ie:
         import traceback
         trace = traceback.format_exc()
