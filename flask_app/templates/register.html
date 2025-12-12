@@ -9,15 +9,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0f172a',
+                            card: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: linear-gradient(135deg, #eef2ff 0%, #ffffff 50%, #f5f3ff 100%);
         }
+
+        .dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
     </style>
 </head>
 
-<body class="flex items-center justify-center min-h-screen px-4 py-8">
+<body class="flex items-center justify-center min-h-screen px-4 py-8 transition-colors duration-300">
+
+    <!-- Theme Toggle (Floating) -->
+    <button onclick="toggleTheme()"
+        class="absolute top-6 right-6 p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur shadow-sm hover:shadow-md transition text-slate-500 dark:text-slate-300 z-50">
+        <i id="theme-icon" class="fa-solid fa-moon"></i>
+    </button>
 
     <div class="w-full max-w-lg">
 
@@ -27,20 +52,21 @@
                 class="mx-auto h-16 w-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 mb-4">
                 <i class="fa-solid fa-graduation-cap text-3xl"></i>
             </div>
-            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Mulai Perjalanan Skripsimu</h2>
-            <p class="mt-2 text-slate-500">Gabung dengan ribuan mahasiswa lainnya.</p>
+            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Mulai Perjalanan Skripsimu
+            </h2>
+            <p class="mt-2 text-slate-500 dark:text-slate-400">Gabung dengan ribuan mahasiswa lainnya.</p>
         </div>
 
         <!-- Card -->
         <div
-            class="bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl p-8 md:p-10 shadow-2xl shadow-indigo-100 relative overflow-hidden">
+            class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white/50 dark:border-slate-700 rounded-3xl p-8 md:p-10 shadow-2xl shadow-indigo-100 dark:shadow-none relative overflow-hidden transition-all duration-300">
 
             <!-- Blob effect -->
             <div
-                class="absolute -top-20 -right-20 w-40 h-40 bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none">
+                class="absolute -top-20 -right-20 w-40 h-40 bg-purple-100 dark:bg-purple-900/20 rounded-full blur-3xl opacity-50 pointer-events-none">
             </div>
             <div
-                class="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none">
+                class="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50 pointer-events-none">
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -57,42 +83,44 @@
             {% endwith %}
 
             <form action="/register" method="POST" class="space-y-5 relative z-10">
-
                 <div>
-                    <label for="username" class="block text-sm font-bold text-slate-700 mb-2">Username</label>
+                    <label for="username"
+                        class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Username</label>
                     <div class="relative">
                         <div
                             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <input id="username" name="username" type="text" required
-                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
                             placeholder="Contoh: BudiSkripsi">
                     </div>
                 </div>
 
                 <div>
-                    <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                    <label for="email"
+                        class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <div class="relative">
                         <div
                             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <i class="fa-solid fa-envelope"></i>
                         </div>
                         <input id="email" name="email" type="email" autocomplete="email" required
-                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
                             placeholder="nama@email.com">
                     </div>
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-bold text-slate-700 mb-2">Password</label>
+                    <label for="password"
+                        class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Password</label>
                     <div class="relative">
                         <div
                             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <i class="fa-solid fa-lock"></i>
                         </div>
                         <input id="password" name="password" type="password" required
-                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+                            class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
                             placeholder="Minimal 6 karakter">
                     </div>
                 </div>
@@ -108,14 +136,36 @@
             </form>
 
             <div class="mt-8 text-center relative z-10">
-                <p class="text-sm text-slate-500">
+                <p class="text-sm text-slate-500 dark:text-slate-400">
                     Sudah punya akun?
-                    <a href="/login" class="font-bold text-indigo-600 hover:text-indigo-500 transition">Masuk di
+                    <a href="/login"
+                        class="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition">Masuk di
                         sini</a>
                 </p>
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const icon = document.getElementById('theme-icon');
+            if (isDark) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+        }
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+                const icon = document.getElementById('theme-icon');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            }
+        })();
+    </script>
 </body>
 
 </html>
