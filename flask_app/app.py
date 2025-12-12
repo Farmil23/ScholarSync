@@ -35,6 +35,8 @@ app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
 # Database Config for Vercel (Neon/Postgres)
 database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    database_url = os.getenv("CONNECTION_STRING")
 is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
 
 if not database_url:

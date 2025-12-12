@@ -35,3 +35,4 @@ byteplus-python-sdk-v2
 python-dotenv
 ddgs
 vercel-blob
+psycopg2
