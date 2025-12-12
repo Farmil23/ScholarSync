@@ -552,9 +552,19 @@ def serve_pdf(filename):
     safe_filename = os.path.basename(filename)
     
     # 1. Check DB for Blob URL
-    # We try to match filename. Note: DB filename might be "A.pdf" while requested is "A.pdf"
-    # But currently the Viewer requests the original filename "A.pdf".
+    # Exact Match
     doc = Document.query.filter_by(user_id=current_user.id, filename=safe_filename).order_by(Document.uploaded_at.desc()).first()
+    
+    # Fuzzy Match (Fallback for LLM typos like missing 'v7')
+    if not doc:
+        # Find any doc that contains the requested filename OR requested filename contains doc name
+        all_docs = Document.query.filter_by(user_id=current_user.id).all()
+        for d in all_docs:
+            if safe_filename in d.filename or d.filename in safe_filename:
+                doc = d
+                safe_filename = d.filename # Update to real filename for local check
+                print(f"📂 Fuzzy Match Found: Requested '{filename}' -> Found '{d.filename}'")
+                break
     
     if doc and doc.file_url:
         print(f"📂 Redirecting to Blob: {doc.file_url}")
@@ -563,7 +573,7 @@ def serve_pdf(filename):
     # 2. Fallback: Local /tmp storage
     import glob
     
-    # Check for specific user-prefixed file
+    # Check for specific user-prefixed file (using the Potentially Corrected safe_filename)
     user_prefixed_name = f"{current_user.id}_{safe_filename}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], user_prefixed_name)
     
@@ -575,7 +585,7 @@ def serve_pdf(filename):
     if os.path.exists(file_path_exact):
          return send_file(file_path_exact)
          
-    return f"File not found. Searched for {user_prefixed_name}", 404
+    return f"File not found. Searched for {user_prefixed_name} (Fuzzy corrected: {doc.filename if doc else 'None'})", 404
 
 @app.route('/download_chat/<int:session_id>')
 @login_required
