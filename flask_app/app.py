@@ -160,7 +160,7 @@ def get_astradb_retriever(user_id):
         }
     )
 
-def get_agent_executor(user_id):
+def get_agent_executor(user_id, doc_names=None):
     """
     Creates an Agent Executor with access to the user's vector store.
     Includes Prompt Engineering for Smart Citations.
@@ -200,8 +200,11 @@ def get_agent_executor(user_id):
     
     tools = [retriever_tool, search_tool]
     
+    # Format valid filenames for the prompt
+    valid_files_str = ", ".join(doc_names) if doc_names else "No specific files."
+
     # 2. React Prompt
-    template = """You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
+    template = f"""You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
 
 Role & Behavior:
 1. **Critical & Academic**: Don't just answer. Critique the student's question if it's vague. Suggest better academic phrasing.
@@ -212,6 +215,9 @@ Role & Behavior:
 MANDATORY CITATION FORMAT:
 When you use knowledge from a document, you MUST cite it using the EXACT filename found in the 'source' metadata field of the retrieved context.
 Format: [[filename.pdf|page_number]]
+
+VALID FILENAMES (YOU MUST ONLY CITE THESE):
+[{valid_files_str}]
 
 CRITICAL INSTRUCTIONS FOR CITATIONS:
 1. NEVER invention or guess filenames. e.g. Do NOT change "1706.03762.pdf" to "Attention.pdf".
@@ -229,13 +235,13 @@ TOOLS:
 ------
 You have access to the following tools:
 
-{tools}
+{{tools}}
 
 To use a tool, please use the following format:
 
 ```
 Thought: Do I need to use a tool? Yes
-Action: the action to take, should be one of [{tool_names}]
+Action: the action to take, should be one of [{{tool_names}}]
 Action Input: the input to the action
 Observation: the result of the action
 ```
@@ -250,10 +256,10 @@ Final Answer: [your response here]
 Begin!
 
 Previous conversation history:
-{chat_history}
+{{chat_history}}
 
-Question: {input}
-Thought:{agent_scratchpad}"""
+Question: {{input}}
+Thought:{{agent_scratchpad}}"""
 
     prompt = PromptTemplate.from_template(template)
     
@@ -499,10 +505,15 @@ def chat():
             role_marker = "User" if msg.role == 'user' else "AI"
             history_str += f"{role_marker}: {msg.content}\n"
                 
-        # 3. Invoke Agent (Pass allowed_docs if possible)
-        # Note: For now we pass user_id. In a real specialized RAG, 
-        # we would pass the specific filenames to the retriever filter.
-        executor = get_agent_executor(current_user.id)
+        # 3. Invoke Agent
+        # Fetch valid filenames to prevent hallucinations
+        # We can either use ALL user docs, or only those in the session.
+        # For simplicity and context, let's use all user docs so the agent knows what's available physically
+        # (Though technically it should be filtered by session, but retriever filters by user anyway)
+        user_docs = Document.query.filter_by(user_id=current_user.id).all()
+        doc_names = [d.filename for d in user_docs]
+        
+        executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
         try:
             response = executor.invoke({
