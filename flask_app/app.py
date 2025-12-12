@@ -35,6 +35,7 @@ app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")
 
 # Database Config for Vercel (Neon/Postgres)
 database_url = os.getenv("DATABASE_URL")
+is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
 
 if not database_url:
     # CRITICAL: In serverless (Vercel), we CANNOT use SQLite/Memory for persistence.
@@ -51,7 +52,7 @@ if "psql" in database_url:
         database_url = match.group(1).rstrip("'")
         print(f"⚠️ Cleaned DATABASE_URL: Detected 'psql' command, extracting URL.")
 
-if "sqlite" in database_url:
+if "sqlite" in database_url and is_vercel:
     print("❌ ERROR: SQLite URL detected. Vercel does not support SQLite.")
     raise RuntimeError("SQLite is not supported. Please use the Neon PostgreSQL URL.")
 
@@ -68,7 +69,8 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 # File Configuration
 # On Vercel (Serverless), we must use /tmp
 # We check if we are in a read-only environment or specific env var
-is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+# We check if we are in a read-only environment or specific env var
+# is_vercel defined above
 
 if is_vercel:
     app.config['UPLOAD_FOLDER'] = '/tmp'
@@ -248,7 +250,7 @@ with app.app_context():
             print("Migration successful: file_url added.")
             
     except Exception as e:
-        print(f"⚠️ Database connection failed during startup: {e}")
+        print(f"WARNING: Database connection failed during startup: {e}")
         # We generally do not want to stop the app here, 
         # so that the / route can still load and logs can be seen.
 
