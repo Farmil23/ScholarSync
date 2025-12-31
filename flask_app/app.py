@@ -21,6 +21,8 @@ from langchain_openai import OpenAIEmbeddings
 
 # Third-party (Lightweight)
 from ddgs import DDGS
+from gtts import gTTS
+import io
 
 # Local Imports
 import sys
@@ -1226,6 +1228,45 @@ def generate_flashcards():
                 { "question": "Error generating", "answer": str(e) }
             ]
         })
+
+@app.route('/api/audio_summary/<int:session_id>')
+@login_required
+def get_audio_summary(session_id):
+    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first()
+    if not session:
+        return "Session not found", 404
+        
+    # Logic: Get the last AI message
+    last_msg = ChatMessage.query.filter_by(session_id=session.id, role='ai').order_by(ChatMessage.created_at.desc()).first()
+    
+    text_to_speak = "Belum ada percakapan untuk diringkas."
+    
+    if last_msg:
+        # Clean markdown
+        import re
+        clean_text = re.sub(r'[*_#`\[\]]', '', last_msg.content)
+        # Limit length for speed
+        text_to_speak = clean_text[:500] + ("..." if len(clean_text) > 500 else "")
+        text_to_speak = "Berikut ringkasan audio dari jawaban terakhir: " + text_to_speak
+    else:
+        text_to_speak = "Halo! Ini adalah ScholarSync. Mulailah percakapan untuk mendengarkan ringkasan."
+
+    try:
+        # Generate Audio
+        tts = gTTS(text_to_speak, lang='id')
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        
+        return send_file(
+            fp,
+            mimetype='audio/mpeg',
+            as_attachment=False,
+            download_name='summary.mp3'
+        )
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        return str(e), 500
 
 if __name__ == '__main__':
     with app.app_context():

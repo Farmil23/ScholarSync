@@ -218,6 +218,11 @@
                     class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[150px]">...</span>
                 <span class="text-[10px] text-slate-400">Current Session</span>
             </div>
+            <button onclick="toggleAudio()"
+                class="mr-2 text-xs bg-indigo-50 dark:bg-slate-800/50 border border-indigo-200 dark:border-slate-600 text-indigo-600 dark:text-indigo-400 px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-slate-700 transition flex items-center gap-2 font-semibold shadow-sm group">
+                <i class="fa-solid fa-headphones group-hover:animate-bounce"></i> <span
+                    class="hidden sm:inline">Podcast</span>
+            </button>
             <button onclick="toggleFlashcardModal()"
                 class="mr-2 text-xs bg-indigo-50 dark:bg-slate-800/50 border border-indigo-200 dark:border-slate-600 text-indigo-600 dark:text-indigo-400 px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-slate-700 transition flex items-center gap-2 font-semibold shadow-sm">
                 <i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">Flashcards</span>
@@ -1091,6 +1096,37 @@
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
             }
+        }
+
+        // --- Audio Podcast Logic ---
+        let audioPlayer = null;
+
+        function toggleAudio() {
+            if (!currentSessionId) {
+                alert("Pilih atau mulai sesi dulu!");
+                return;
+            }
+
+            // If playing, stop
+            if (audioPlayer && !audioPlayer.paused) {
+                audioPlayer.pause();
+                audioPlayer = null;
+                return;
+            }
+
+            // Play new
+            const url = `/api/audio_summary/${currentSessionId}?t=${new Date().getTime()}`;
+            audioPlayer = new Audio(url);
+            audioPlayer.play().catch(e => alert("Gagal memutar audio: " + e.message));
+
+            // Simple visual feedback
+            const btn = document.querySelector('.fa-headphones').parentElement;
+            btn.classList.add('animate-pulse', 'text-pink-600');
+
+            audioPlayer.onended = () => {
+                btn.classList.remove('animate-pulse', 'text-pink-600');
+                audioPlayer = null;
+            };
         }
 
         // Init Theme

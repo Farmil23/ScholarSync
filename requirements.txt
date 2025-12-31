@@ -31,3 +31,4 @@ byteplus-python-sdk-v2
 python-dotenv
 ddgs
 vercel-blob
+gTTS>=2.5.1
