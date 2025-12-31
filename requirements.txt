@@ -1,4 +1,3 @@
-
 # --- Framework & Server ---
 flask>=3.0.0
 flask-sqlalchemy>=3.1.1
@@ -7,30 +6,26 @@ flask-bcrypt>=1.0.1
 psycopg2-binary>=2.9.9
 gunicorn>=21.2.0
 
-# --- LangChain Ecosystem (Minimal) ---
-langchain>=0.1.0
-langchain-community>=0.0.10
+# --- LangChain Ecosystem (Micro) ---
+langchain-core>=0.1.0
 langchain-openai>=0.0.2
-# langchain-experimental>=0.0.49 # Removed to save space if not used
-# langchain-huggingface # REMOVED (Heavy Torch dependency)
+# langchain-community # REMOVED: Too large (50MB+ unzipped)
+# langchain # REMOVED: Too large. We use custom agent loop.
 
 # --- Vector Database (DATASTAX ASTRA DB) ---
 langchain-astradb>=0.1.0
 astrapy>=0.7.7
 
 # --- Reranking & AI ---
-# cohere>=4.44.0 # Removed if not strictly used in current path
 openai>=1.10.0
 tiktoken>=0.5.2
 
 # --- PDF Processing ---
 pypdf>=4.0.1 
-# pymupdf # Removed (Heavy binary, causes size limit)
 
 # --- Frontend ---
 # streamlit>=1.30.0 # NOT NEEDED FOR FLASK DEPLOYMENT
 
-# ipykernel # Removed
 byteplus-python-sdk-v2
 python-dotenv
 ddgs

@@ -12,15 +12,15 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 
-# LangChain Imports
-from langchain_classic.agents import AgentExecutor, create_react_agent
-from langchain_classic.tools.retriever import create_retriever_tool
-from langchain_community.tools import DuckDuckGoSearchRun
+# LangChain Imports (Core Only)
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.tools import Tool, BaseTool
 from langchain_astradb import AstraDBVectorStore
 from langchain_openai import OpenAIEmbeddings
-# from langchain_huggingface import HuggingFaceEmbeddings # Removed for Vercel
+
+# Third-party (Lightweight)
+from ddgs import DDGS
 
 # Local Imports
 import sys
@@ -328,49 +328,58 @@ def get_agent_executor(user_id, doc_names=None):
         }
     )
     
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "search_user_documents",
-        "Searches and returns excerpts from the user's uploaded PDF documents."
+    # --- Custom Lightweight Tools ---
+    
+    # 1. Retriever Tool (Manual wrapper)
+    def retrieve_fn(query: str):
+        # We need to manually execute retrieval
+        # .invoke() or .get_relevant_documents() depending on version
+        docs = retriever.get_relevant_documents(query)
+        # Format for the LLM
+        return "\n\n".join([f"Source: {d.metadata.get('source', 'Unknown')} (Page {d.metadata.get('page', 1)})\nContent: {d.page_content}" for d in docs])
+
+    retriever_tool = Tool(
+        name="search_user_documents",
+        func=retrieve_fn,
+        description="Searches and returns excerpts from the user's uploaded PDF documents. Input should be a specific search query."
     )
     
-    search_tool = DuckDuckGoSearchRun(
-        name="web_search", 
+    # 2. Search Tool (Using ddgs directly)
+    def search_fn(query: str):
+        try:
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=3))
+                if not results:
+                    return "No results found."
+                return "\n".join([f"Title: {r['title']}\nLink: {r['href']}\nSnippet: {r['body']}" for r in results])
+        except Exception as e:
+            return f"Search Error: {str(e)}"
+
+    search_tool = Tool(
+        name="web_search",
+        func=search_fn, 
         description="Search the web for general knowledge, current events, or info not in the documents."
     )
     
     tools = [retriever_tool, search_tool]
+    tool_map = {t.name: t for t in tools}
     
     # Format valid filenames for the prompt
     valid_files_str = ", ".join(doc_names) if doc_names else "No specific files (General Knowledge Mode)."
 
-    # 2. React Prompt
-    template = f"""You are Dr. Sync, an expert Academic Thesis Consultant (Dosen Pembimbing) for final-year students.
+    # 3. Simple ReAct Prompt
+    template = f"""You are Dr. Sync, an expert Academic Thesis Consultant.
 
 Role & Behavior:
 1. **Critical & Academic**: Don't just answer. Critique the student's question if it's vague. Suggest better academic phrasing.
 2. **Evidence-Based**: ALWAYS use the `search_user_documents` tool first.
 3. **Structured**: When asked about "Research Gap" or "Framework", provide a structured list.
-4. **Language**: Use formal Indonesian (Bahasa Baku) mixed with standard English academic terms (e.g., "State of the Art", "Novelty").
+4. **Language**: Use formal Indonesian (Bahasa Baku) mixed with standard English academic terms.
 
 MANDATORY CITATION FORMAT:
 When you use knowledge from a document, you MUST cite it using the EXACT filename found in the 'source' metadata field of the retrieved context.
 Format: [[filename.pdf|page_number]]
-
-VALID FILENAMES (YOU MUST ONLY CITE THESE):
-[{valid_files_str}]
-
-CRITICAL INSTRUCTIONS FOR CITATIONS:
-1. NEVER invention or guess filenames. e.g. Do NOT change "1706.03762.pdf" to "Attention.pdf".
-2. You MUST use the exact string provided in the "source" field of the context.
-3. If looking at a document named "123.pdf", your citation MUST be [[123.pdf|...]], not [[Title of Paper.pdf|...]].
-
-Example:
-Context indicates source is "report_v1.pdf" on page 10.
-Correct Citation: "The revenue increased [[report_v1.pdf|10]]..."
-Incorrect Citation: "The revenue increased [[Final Report.pdf|10]]..."
-
-If the tool does not provide a page number, use 1 or omit the page part [[filename.pdf]].
+VALID FILENAMES: [{valid_files_str}]
 
 TOOLS:
 ------
@@ -402,21 +411,99 @@ Previous conversation history:
 Question: {{input}}
 Thought:{{agent_scratchpad}}"""
 
-    prompt = PromptTemplate.from_template(template)
-    
-    # 3. Create Agent
-    agent = create_react_agent(llm, tools, prompt)
-    
-    # 4. Create Executor
-    agent_executor = AgentExecutor(
-        agent=agent, 
-        tools=tools, 
-        verbose=True, 
-        handle_parsing_errors=True,
-        max_iterations=5
-    )
-    
-    return agent_executor
+    # 4. Custom Lightweight Agent Executor
+    class SimpleReactExecutor:
+        def __init__(self, llm, tools, prompt_template):
+            self.llm = llm
+            self.tools = {t.name: t for t in tools}
+            self.prompt_template = prompt_template
+            self.max_steps = 5
+            
+        def invoke(self, inputs, config=None):
+            # Extract inputs
+            user_input = inputs.get("input", "")
+            chat_history = inputs.get("chat_history", "")
+            callbacks = config.get("callbacks", []) if config else []
+            
+            # Helper to stream thought
+            def log_token(text):
+                for cb in callbacks:
+                    if hasattr(cb, 'on_llm_new_token'):
+                        cb.on_llm_new_token(text)
+            
+            # Prepare Prompt
+            tools_desc = "\\n".join([f"{t.name}: {t.description}" for t in self.tools.values()])
+            tool_names = ", ".join(self.tools.keys())
+            
+            scratchpad = ""
+            
+            import re
+            
+            for step in range(self.max_steps):
+                # Format full prompt
+                full_prompt = self.prompt_template.replace("{{tools}}", tools_desc) \
+                                          .replace("{{tool_names}}", tool_names) \
+                                          .replace("{{chat_history}}", chat_history) \
+                                          .replace("{{input}}", user_input) \
+                                          .replace("{{agent_scratchpad}}", scratchpad)
+                
+                # Call LLM
+                # We assume LLM supports invoke() or .predict()
+                # For BytePlus/OpenAI wrapper, we might use invoke() text in text out
+                # If Custom LLM, it might stream?
+                # We will just use invoke and simulate stream via callback manually if needed, 
+                # OR if LLM streams, we capture it.
+                # Since we replaced the built-in agent, we lose automatic streaming from LLM->Callback->Queue.
+                # We need to manually pipe LLM output to callback if possible.
+                # However, for simplicity/stability, let's just run blocking call first 
+                # AND fake stream the thought process to the UI.
+                
+                response_text = self.llm.invoke(full_prompt)
+                
+                # Send to callback (Simulation)
+                log_token(response_text)
+                
+                # Parse
+                # Look for Action: ... Action Input: ...
+                action_match = re.search(r"Action:\s*(.*?)\nAction Input:\s*(.*)", response_text, re.DOTALL)
+                
+                if "Final Answer:" in response_text:
+                    # Done
+                    final_ans = response_text.split("Final Answer:")[-1].strip()
+                    return {"output": final_ans}
+                
+                if action_match:
+                    action_name = action_match.group(1).strip()
+                    action_input = action_match.group(2).strip()
+                    
+                    # Tool Execution
+                    if action_name in self.tools:
+                        log_token(f"\n[Executing {action_name}...]\n")
+                        try:
+                             # Handle input like "query" or 'query'
+                             action_input = action_input.strip('"').strip("'")
+                             observation = self.tools[action_name].func(action_input)
+                        except Exception as e:
+                             observation = f"Error: {str(e)}"
+                    else:
+                        observation = f"Error: Tool {action_name} not found."
+                        
+                    scratchpad += f"{response_text}\nObservation: {observation}\n"
+                    log_token(f"Observation: {observation}\n")
+                else:
+                    # No action found, maybe just thoughts or malformed.
+                    # If it ends without Final Answer, we might just assume it's talking.
+                    # Or force loop.
+                    # For safety, break if no action and no final answer.
+                    if "Do I need to use a tool? No" in response_text:
+                         # It forgot Final Answer label?
+                         return {"output": response_text}
+                    return {"output": response_text}
+                    
+            return {"output": "Agent stopped (max steps reached)."}
+
+    # Return our custom executor
+    return SimpleReactExecutor(llm, tools, template)
 
 # --- Logger ---
 def log_activity(user_id, action, details=None):
