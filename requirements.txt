@@ -8,6 +8,7 @@ gunicorn>=21.2.0
 
 # --- LangChain Ecosystem (Micro) ---
 langchain-core>=0.1.0
+langchain-text-splitters>=0.0.1
 langchain-openai>=0.0.2
 # langchain-community # REMOVED: Too large (50MB+ unzipped)
 # langchain # REMOVED: Too large. We use custom agent loop.
