@@ -146,6 +146,44 @@
         }
 
         /* Checkbox Custom Style (optional if needed) */
+
+        /* Flashcard Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
     </style>
 </head>
 
@@ -180,6 +218,10 @@
                     class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[150px]">...</span>
                 <span class="text-[10px] text-slate-400">Current Session</span>
             </div>
+            <button onclick="toggleFlashcardModal()"
+                class="mr-2 text-xs bg-indigo-50 dark:bg-slate-800/50 border border-indigo-200 dark:border-slate-600 text-indigo-600 dark:text-indigo-400 px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-slate-700 transition flex items-center gap-2 font-semibold shadow-sm">
+                <i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">Flashcards</span>
+            </button>
             <button onclick="exportChat()"
                 class="text-xs bg-white dark:bg-slate-800 border border-indigo-200 dark:border-slate-600 text-indigo-600 dark:text-indigo-400 px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-slate-700 transition flex items-center gap-2 font-semibold shadow-sm">
                 <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden sm:inline">Export Draft</span>
@@ -371,6 +413,66 @@
                             class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-lg transition transform hover:scale-105">Simpan</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flashcard Modal -->
+    <div id="flashcard-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="toggleFlashcardModal()"></div>
+        <div
+            class="bg-white dark:bg-slate-800 w-11/12 md:max-w-2xl h-[500px] rounded-2xl shadow-2xl z-50 overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col">
+            <!-- Header -->
+            <div
+                class="p-6 border-b border-indigo-50 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 z-10">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-white"><i
+                        class="fa-solid fa-layer-group text-indigo-500 mr-2"></i> Study Flashcards</h3>
+                <button onclick="toggleFlashcardModal()" class="text-slate-400 hover:text-slate-600"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 flex flex-col items-center justify-center relative"
+                id="flashcard-body">
+                <!-- Initial State -->
+                <div id="flashcard-initial" class="text-center">
+                    <div
+                        class="h-20 w-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400">
+                        <i class="fa-solid fa-bolt text-3xl"></i>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">Generate AI flashcards from current session
+                        documents.</p>
+                    <button onclick="generateFlashcards()"
+                        class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition hover:shadow-indigo-500/25">
+                        ✨ Generate Cards
+                    </button>
+                </div>
+
+                <!-- Loader -->
+                <div id="flashcard-loader" class="hidden flex-col items-center text-center">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
+                    <p class="text-slate-500 dark:text-slate-400 animate-pulse font-medium">Reading documents &
+                        generating concepts...</p>
+                </div>
+
+                <!-- Cards Container -->
+                <div id="flashcard-container" class="hidden w-full max-w-md perspective-1000 h-72 relative">
+                    <!-- Cards injected here -->
+                </div>
+
+                <!-- Controls -->
+                <div id="flashcard-controls" class="hidden mt-8 flex gap-6 items-center">
+                    <button onclick="prevCard()"
+                        class="h-12 w-12 rounded-full bg-white dark:bg-slate-800 shadow-md text-slate-500 hover:text-indigo-600 hover:scale-110 transition"><i
+                            class="fa-solid fa-arrow-left"></i></button>
+                    <span id="card-counter"
+                        class="font-bold text-slate-500 text-sm font-mono tracking-widest bg-slate-200 dark:bg-slate-700 px-3 py-1 rounded-full">1
+                        / 5</span>
+                    <button onclick="nextCard()"
+                        class="h-12 w-12 rounded-full bg-white dark:bg-slate-800 shadow-md text-slate-500 hover:text-indigo-600 hover:scale-110 transition"><i
+                            class="fa-solid fa-arrow-right"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -801,6 +903,110 @@
             window.location.href = `/download_chat/${currentSessionId}`;
         }
 
+        // --- Flashcard Logic ---
+        let currentFlashcards = [];
+        let currentCardIndex = 0;
+
+        function toggleFlashcardModal() {
+            const modal = document.getElementById('flashcard-modal');
+            modal.classList.toggle('opacity-0');
+            modal.classList.toggle('pointer-events-none');
+
+            // Scale animation
+            const content = modal.querySelector('.transform');
+            if (content) {
+                if (modal.classList.contains('opacity-0')) {
+                    content.classList.remove('scale-100');
+                    content.classList.add('scale-95');
+                } else {
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }
+            }
+        }
+
+        async function generateFlashcards() {
+            if (!currentSessionId) {
+                alert("Please select or start a session first!");
+                return;
+            }
+
+            document.getElementById('flashcard-initial').classList.add('hidden');
+            document.getElementById('flashcard-loader').classList.remove('hidden');
+            document.getElementById('flashcard-loader').classList.add('flex');
+
+            try {
+                const res = await fetch('/generate_flashcards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId })
+                });
+                const data = await res.json();
+
+                if (data.flashcards) {
+                    currentFlashcards = data.flashcards;
+                    currentCardIndex = 0;
+                    renderCard(0);
+
+                    document.getElementById('flashcard-loader').classList.add('hidden');
+                    document.getElementById('flashcard-loader').classList.remove('flex');
+                    document.getElementById('flashcard-container').classList.remove('hidden');
+                    document.getElementById('flashcard-controls').classList.remove('hidden');
+                    document.getElementById('flashcard-controls').classList.add('flex'); // Ensure flex
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
+                document.getElementById('flashcard-initial').classList.remove('hidden');
+                document.getElementById('flashcard-loader').classList.add('hidden');
+                document.getElementById('flashcard-loader').classList.remove('flex');
+            }
+        }
+
+        function renderCard(index) {
+            const container = document.getElementById('flashcard-container');
+            const card = currentFlashcards[index];
+            if (!card) return;
+
+            document.getElementById('card-counter').innerText = `${index + 1} / ${currentFlashcards.length}`;
+
+            // We use innerHTML replacement to reset state. Animation handled by CSS class toggle.
+            container.innerHTML = `
+        <div class="flip-card-inner" onclick="this.classList.toggle('flipped')">
+            <div class="flip-card-front bg-white dark:bg-slate-800 border-2 border-indigo-50 dark:border-slate-700">
+                <div class="flex flex-col items-center p-4">
+                    <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-6 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">Question</p>
+                    <h4 class="text-xl font-bold text-slate-800 dark:text-white text-center leading-relaxed">${card.question}</h4>
+                    <div class="absolute bottom-6 text-slate-400 text-xs animate-bounce">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> Tap to flip
+                    </div>
+                </div>
+            </div>
+            <div class="flip-card-back bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-2 border-transparent">
+                <div class="flex flex-col items-center p-4 w-full">
+                    <p class="text-[10px] font-bold text-indigo-200 uppercase tracking-widest mb-4 border border-white/20 px-2 py-1 rounded">Answer</p>
+                    <p class="text-lg font-medium leading-relaxed text-center">${card.answer}</p>
+                </div>
+            </div>
+        </div>
+    `;
+        }
+
+        function nextCard() {
+            if (currentCardIndex < currentFlashcards.length - 1) {
+                currentCardIndex++;
+                renderCard(currentCardIndex);
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                renderCard(currentCardIndex);
+            }
+        }
         function copyCitation(text) {
             navigator.clipboard.writeText(text);
             alert("Sitasi disalin!");

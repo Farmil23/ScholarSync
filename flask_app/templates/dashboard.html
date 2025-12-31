@@ -25,6 +25,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -291,6 +292,17 @@
                 <div
                     class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/30 rounded-full blur-2xl opacity-50">
                 </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- Activity Analytics Chart -->
+        <div class="glass-card p-6 rounded-2xl mb-8 relative overflow-hidden">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4"><i
+                    class="fa-solid fa-chart-line text-indigo-500 mr-2"></i> Activity Analytics (Last 7 Days)</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="activityChart"></canvas>
             </div>
         </div>
 
@@ -800,19 +812,67 @@
                         const listItem = nameEl.closest('.searchable-item');
                         if (listItem) listItem.setAttribute('data-name', newName.toLowerCase());
 
-                        showToast('Nama dokumen diperbarui!', 'success');
                         toggleModal('rename-modal');
                     } else {
-                        showToast("Gagal mengubah nama.", 'error');
+                        alert("Gagal mengubah nama");
                     }
                 } catch (e) {
                     console.error(e);
-                    showToast("Kesalahan koneksi.", 'error');
+                    alert("Error connection");
                 } finally {
                     btn.innerText = originalText;
                     btn.disabled = false;
                 }
             }
+
+            // --- Activity Chart Logic ---
+            document.addEventListener('DOMContentLoaded', async () => {
+                const ctx = document.getElementById('activityChart');
+                if (!ctx) return;
+
+                try {
+                    const response = await fetch('/api/activity-stats');
+                    const data = await response.json();
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Actions Performed',
+                                data: data.data,
+                                borderColor: '#6366f1', // Indigo-500
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#6366f1',
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { display: false },
+                                    ticks: { stepSize: 1 }
+                                },
+                                x: {
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to load chart", e);
+                }
+            });
+
 
             // UI Helpers
             function showToast(message, type = 'info') {

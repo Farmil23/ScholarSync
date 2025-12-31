@@ -1041,6 +1041,105 @@ def export_logs():
         download_name=filename
     )
 
+@app.route('/api/activity-stats')
+@login_required
+def get_activity_stats():
+    # Last 7 days stats
+    from datetime import timedelta
+    
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=6)
+    
+    # Init dictionary for last 7 days
+    dates = []
+    counts = []
+    
+    current = start_date
+    while current <= end_date:
+        date_str = current.strftime('%Y-%m-%d')
+        # Count logs for this date (User specific)
+        # SQLAlchemy filter for date part only
+        count = ActivityLog.query.filter(
+            ActivityLog.user_id == current_user.id,
+            db.func.date(ActivityLog.timestamp) == current.date()
+        ).count()
+        
+        dates.append(current.strftime('%a')) # Mon, Tue
+        counts.append(count)
+        current += timedelta(days=1)
+        
+    return jsonify({
+        'labels': dates,
+        'data': counts
+    })
+
+@app.route('/generate_flashcards', methods=['POST'])
+@login_required
+def generate_flashcards():
+    data = request.json
+    session_id = data.get('session_id')
+    
+    if not session_id:
+        return jsonify({'error': 'Session ID required'}), 400
+        
+    session = ChatSession.query.filter_by(id=session_id, user_id=current_user.id).first()
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+        
+    # Get context from documents
+    docs = session.documents
+    if not docs:
+         return jsonify({'error': 'No documents in this session to study.'}), 400
+         
+    doc_context = ", ".join([d.filename for d in docs])
+    
+    # Minimal RAG for Flashcards (using same vector store or just filenames? 
+    # Ideally should retrieve actual content, but for speed/token limits without complex RAG in this specific fn, 
+    # we might just ask for general concepts if content not retrieved. 
+    # BETTER: Retrieve a summary or random chunks. 
+    # SIMPLIFIED APPROACH for SPEED: Use the 'get_agent_executor' but with a specific prompt
+    # OR: Just separate LLM call. Let's use the simplest valid approach:
+    # We will trigger the existing agent with a specific instruction.)
+    
+    # Re-using the Agent Executor is robust because it has the tools.
+    executor = get_agent_executor(current_user.id, [d.filename for d in docs])
+    
+    prompt = f"""
+    Generasikan 5 Flashcard belajar (Kartu Kilat) berdasarkan dokumen-dokumen yang ada di sesi ini.
+    Fokus pada konsep kunci, definisi, atau argumen utama dalam skripsi/dokumen tersebut.
+    
+    Format Output WAJIB JSON murni seperti ini (tanpa markdown blok):
+    {{
+        "flashcards": [
+            {{ "question": "Apa itu X?", "answer": "X adalah..." }},
+            {{ "question": "Mengapa Y penting?", "answer": "Karena..." }}
+        ]
+    }}
+    
+    JANGAN memberikan teks lain selain JSON tersebut.
+    """
+    
+    try:
+        response = executor.invoke({"input": prompt, "chat_history": ""})
+        output_text = response['output']
+        
+        # Cleanup potential markdown around JSON
+        output_text = output_text.strip()
+        if output_text.startswith("```json"):
+            output_text = output_text.replace("```json", "").replace("```", "")
+        elif output_text.startswith("```"):
+             output_text = output_text.replace("```", "")
+             
+        return jsonify(json.loads(output_text))
+    except Exception as e:
+        print(f"Flashcard Gen Error: {e}")
+        # Fallback dummy if AI fails
+        return jsonify({
+            "flashcards": [
+                { "question": "Error generating", "answer": str(e) }
+            ]
+        })
+
 if __name__ == '__main__':
     with app.app_context():
         # Ensure migration for new table
