@@ -2,7 +2,7 @@
 import os
 import shutil
 # from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_community.document_loaders import PyPDFLoader
+# from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_astradb import AstraDBVectorStore
 from langchain_openai import OpenAIEmbeddings
@@ -24,10 +24,23 @@ def ingest_file(file_path, user_id, original_filename):
     """
     print(f"📄 Processing {original_filename} for User: {user_id}")
     
-    # 1. Load
-    # Switched to PyPDFLoader (pypdf) which is lighter than PyMuPDF
-    loader = PyPDFLoader(file_path)
-    documents = loader.load()
+    # 1. Load - Manual pypdf implementation to avoid heavy dependency
+    from pypdf import PdfReader
+    from langchain_core.documents import Document
+
+    documents = []
+    try:
+        reader = PdfReader(file_path)
+        for i, page in enumerate(reader.pages):
+            text = page.extract_text()
+            if text:
+                documents.append(Document(
+                    page_content=text, 
+                    metadata={"page": i + 1, "source": original_filename}
+                ))
+    except Exception as e:
+        print(f"Error loading PDF: {e}")
+        return 0
     
     # 2. Add Metadata
     # We add user_id to ensure we can filter later.
