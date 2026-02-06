@@ -944,7 +944,7 @@ def chat():
             'answer': f"System Error: {str(ie)}",
             'context': []
         })
-
+ 
 @app.route('/pdf/<path:filename>')
 @login_required
 def serve_pdf(filename):
