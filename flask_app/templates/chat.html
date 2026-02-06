@@ -748,47 +748,28 @@
                     throw new Error("Network response was not ok");
                 }
 
-                // Remove thinking indicator immediately once stream starts (or when we have first token)
-                // For better UX, let's remove it now and replace with empty bubble
+                // Remove thinking indicator immediately once stream starts
                 thinkingDiv.remove();
 
                 // Create placeholder for AI response
                 const msgDiv = appendMessage('ai', '');
 
-                // Structure: 
-                // msgDiv -> [Avatar, ContentWrapper]
-                // ContentWrapper -> [Name, ThinkingContainer, Bubble, Citations]
-
+                // Get the content wrapper
                 const contentWrapper = msgDiv.querySelector('.max-w-\\[85\\%\\]') || msgDiv.querySelector('.max-w-\\[75\\%\\]');
                 const bubble = msgDiv.querySelector('.prose'); // The main bubble
 
-                // 1. Insert Thinking Container (Initially Hidden/Empty)
+                // 1. Create Thinking Container (Initially Hidden)
+                // We want this OUTSIDE the main bubble, or inside? 
+                // Inside the content wrapper, ABOVE the bubble.
                 const thinkingContainer = document.createElement('div');
-                thinkingContainer.className = "mb-2 text-xs text-slate-400 dark:text-slate-500 font-mono hidden";
-                thinkingContainer.innerHTML = `
-                    <details class="group/think">
-                        <summary class="cursor-pointer hover:text-indigo-500 transition select-none flex items-center gap-2">
-                            <i class="fa-solid fa-brain text-[10px]"></i> 
-                            <span>Thinking Process...</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] transform group-open/think:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700 whitespace-pre-wrap leading-relaxed" id="thinking-content-${Date.now()}"></div>
-                    </details>
-                `;
+                thinkingContainer.className = "mb-3 hidden space-y-2"; // Hidden by default, unhidden on first status
 
-                if (contentWrapper && contentWrapper.children.length >= 2) {
-                    // Insert after name (0), before bubble (1)
-                    contentWrapper.insertBefore(thinkingContainer, contentWrapper.children[1]);
-                }
-
-                const thinkingContent = thinkingContainer.querySelector('div[id^="thinking-content"]');
+                // Insert it before the bubble
+                contentWrapper.insertBefore(thinkingContainer, bubble);
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let isThinking = false; // Changed to false for RAG Graph (Direct Answer)
-                let currentThinkingText = "";
                 let currentAnswerText = "";
-
                 let buffer = "";
 
                 while (true) {
@@ -797,9 +778,7 @@
 
                     const chunk = decoder.decode(value, { stream: true });
                     buffer += chunk;
-
                     const parts = buffer.split('\n\n');
-                    // Keep the last part (it might be incomplete)
                     buffer = parts.pop();
 
                     for (const part of parts) {
@@ -807,67 +786,62 @@
                             try {
                                 const jsonStr = part.replace('data: ', '');
                                 if (!jsonStr.trim()) continue;
-
                                 const data = JSON.parse(jsonStr);
 
+                                // Debug Log
+                                console.log("Stream Data:", data);
+
                                 if (data.token) {
-                                    const token = data.token;
-                                    // Direct to answer
-                                    currentAnswerText += token;
+                                    currentAnswerText += data.token;
                                     bubble.innerHTML = marked.parse(currentAnswerText);
                                     historyContainer.scrollTop = historyContainer.scrollHeight;
 
                                 } else if (data.status) {
-                                    // Update Thinking / Status (Dropdown Style)
+                                    // Show container
                                     thinkingContainer.classList.remove('hidden');
 
-                                    // Check if we should append to the LAST detail or start a new one?
-                                    // For simplicity: specific events start new details.
-                                    // We can use the status text to decide.
-
-                                    const details = document.createElement('details');
-                                    details.className = "mb-2 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 open:bg-slate-50 dark:open:bg-slate-900 transition-colors";
-                                    details.open = false; // Closed by default
-
-                                    const summary = document.createElement('summary');
-                                    summary.className = "cursor-pointer p-2 font-medium text-slate-600 dark:text-slate-300 flex items-center select-none hover:text-indigo-600 dark:hover:text-indigo-400";
-
-                                    // Make title prettier by removing specific details if possible, or just use full text
-                                    // Ideally backend sends {title: "...", content: "..."}
-                                    // For now, let's parse simple strings or expect object.
-
+                                    // Extract Info
                                     let title = "Reasoning Step";
                                     let content = "";
+                                    let isOpen = false;
 
                                     if (typeof data.status === 'object') {
                                         title = data.status.title || title;
                                         content = data.status.content || JSON.stringify(data.status);
-                                        // Auto-open if it's an error or important
-                                        if (data.status.open) details.open = true;
+                                        isOpen = data.status.open || false;
                                     } else {
-                                        // String fallback
                                         title = data.status;
-                                        content = "Process completed.";
+                                        content = "Ready.";
                                     }
 
-                                    summary.innerHTML = `<i class="fa-solid fa-microchip mr-2 text-indigo-500"></i> ${title}`;
+                                    // Create Dropdown Item
+                                    const details = document.createElement('details');
+                                    details.className = "group text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden";
+                                    if (isOpen) details.open = true;
 
-                                    const body = document.createElement('div');
-                                    body.className = "p-2 border-t border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono whitespace-pre-wrap max-h-40 overflow-y-auto custom-scrollbar";
-                                    body.textContent = content; // Safe text
+                                    details.innerHTML = `
+                                        <summary class="flex justify-between items-center p-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition select-none">
+                                            <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                                                <i class="fa-solid fa-circle-check text-indigo-500 text-[10px]"></i>
+                                                <span>${title}</span>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transform group-open:rotate-180 transition-transform"></i>
+                                        </summary>
+                                        <div class="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
+                                            ${content}
+                                        </div>
+                                    `;
 
-                                    details.appendChild(summary);
-                                    details.appendChild(body);
+                                    // Append
+                                    thinkingContainer.appendChild(details);
 
-                                    thinkingContent.appendChild(details);
-
-                                    // Auto-scroll to bottom of thinking container
-                                    thinkingContainer.scrollTop = thinkingContainer.scrollHeight;
+                                    // Auto scroll
+                                    // historyContainer.scrollTop = historyContainer.scrollHeight; 
 
                                 } else if (data.error) {
                                     bubble.innerHTML += `\n\n*Error: ${data.error}*`;
                                 } else if (data.done) {
-                                    // Finished
+                                    // Finished - Process Citations
                                     // Process Citations (make [[...]] clickable)
                                     const citationRegex = /\[\[(.*?)(?:\|(\d+))?\]\]/g;
                                     bubble.innerHTML = bubble.innerHTML.replace(citationRegex, (match, filename, page) => {
