@@ -797,7 +797,7 @@ def chat():
         
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
-        # 5. Run Agent (Synchronous - Reliable Fallback for Vercel)
+        # 5. Run Agent (Threaded with Keep-Alive for Vercel)
         from rag_graph import rag_graph
         
         # Define retrieval function dynamically for the user
@@ -805,57 +805,93 @@ def chat():
             retriever = get_astradb_retriever(current_user.id)
             return retriever.invoke(query)
 
-        # Config Setup
-        config = {"configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}}
-
-        # History Preparation
-        recent_msgs_objs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-5:]
-        history_messages = []
-        for m in recent_msgs_objs:
-            if m.role == 'user':
-                history_messages.append(HumanMessage(content=m.content))
-            else:
-                history_messages.append(AIMessage(content=m.content))
-        history_messages.append(HumanMessage(content=user_input))
-
-        # Generator Function (Synchronous Execution inside generator)
-        def generate():
-            # Ping immediately
-            yield ": ping\n\n"
-            
+        def task():
+            print("DEBUG: Starting Agent Task...")
             try:
-                # Invoke Graph Synchronously (Blocking)
-                print("DEBUG: Synchronous Invoke Start")
+                # Prepare Config
+                config = {
+                    "configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, 
+                    "callbacks": [QueueCallback()]
+                }
+                
+                # History Preparation
+                recent_msgs_objs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-5:]
+                history_messages = []
+                for m in recent_msgs_objs:
+                    if m.role == 'user':
+                        history_messages.append(HumanMessage(content=m.content))
+                    else:
+                        history_messages.append(AIMessage(content=m.content))
+                history_messages.append(HumanMessage(content=user_input))
+                
+                print("DEBUG: Invoking RAG Graph...")
                 response = rag_graph.invoke(
                     {"messages": history_messages, "active_query": user_input},
                     config=config
                 )
-                print("DEBUG: Synchronous Invoke End")
+                print("DEBUG: RAG Graph Finished.")
                 
                 final_output = response["messages"][-1].content
-                
-                # Save to DB
-                # Note: We are inside a generator, so we need app context if not present (but stream_with_context handles it)
-                ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=final_output, citations=json.dumps([]))
-                db.session.add(ai_msg_db)
-                db.session.commit()
-                log_activity(current_user.id, 'chat')
+                q.put({'type': 'result', 'data': {'output': final_output}})
 
-                # Yield the full result as a token
-                # We can split it into chunks to simulate streaming if we want, or just send it all.
-                # Sending all at once is safer.
-                yield f"data: {json.dumps({'token': final_output})}\n\n"
-                yield f"data: {json.dumps({'done': True})}\n\n"
-                
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print(f"DEBUG: Sync Error: {e}")
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                print(f"DEBUG: Task Exception: {e}")
+                q.put({'type': 'error', 'data': str(e)})
+            finally:
+                q.put(job_done)
+
+        t = threading.Thread(target=task)
+        t.start()
         
+        # 6. Stream Generator with Keep-Alive
+        def generate():
+            full_streamed_content = "" 
+            final_answer = "" 
+            
+            yield ": start\n\n"
+            
+            while True:
+                try:
+                    # Wait for 1 second max, then send ping
+                    item = q.get(timeout=1.0)
+                except queue.Empty:
+                    yield ": ping\n\n"
+                    continue
+
+                if item is job_done:
+                    break
+                
+                if isinstance(item, dict):
+                    if item.get('type') == 'result':
+                        final_answer = item['data'].get('output', '')
+                    elif item.get('type') == 'error':
+                        yield f"data: {json.dumps({'error': item['data']})}\n\n"
+                        final_answer = f"Error: {item['data']}"
+                else:
+                    # Token
+                    token = item
+                    full_streamed_content += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Save Logic
+            content_to_save = final_answer if final_answer else full_streamed_content
+            if content_to_save:
+                try:
+                    ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=content_to_save, citations=json.dumps([]))
+                    db.session.add(ai_msg_db)
+                    db.session.commit()
+                    log_activity(current_user.id, 'chat')
+                except Exception as db_e:
+                    print(f"DB Save Error: {db_e}")
+            
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
         r = Response(stream_with_context(generate()), mimetype='text/event-stream')
         r.headers['X-Accel-Buffering'] = 'no'
         return r
+
 
 
 
