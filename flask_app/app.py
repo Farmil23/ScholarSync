@@ -69,13 +69,6 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "pool_pre_ping": True,
     "pool_recycle": 300,
 }
-
-# File Configuration
-# On Vercel (Serverless), we must use /tmp
-# We check if we are in a read-only environment or specific env var
-# We check if we are in a read-only environment or specific env var
-# is_vercel defined above
-
 if is_vercel:
     app.config['UPLOAD_FOLDER'] = '/tmp'
 else:
@@ -798,18 +791,66 @@ def chat():
         
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
-        # 5. Run Agent in Thread
+        # 5. Run Agent in Thread (Using RAG Graph)
+        from rag_graph import rag_graph
+        
+        # Define retrieval function dynamically for the user
+        def retrieval_fn(query):
+            # Re-use the existing AstraDB setup logic or similar
+            # Since we can't easily pass the entire retriever object to a compiled graph if it wasn't built in,
+            # we pass the function via config.
+            retriever = get_astradb_retriever(current_user.id)
+            # Invoke retriever
+            docs = retriever.invoke(query)
+            return docs
+
         def task():
             try:
-                response = executor.invoke(
-                    {
-                        "input": user_input,
-                        "chat_history": history_str
-                    },
-                    config={"callbacks": [QueueCallback()]}
+                # Prepare Config with user-specific retrieval
+                config = {"configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, "callbacks": [QueueCallback()]}
+                
+                # Invoke Graph
+                # The graph state expects 'messages' or 'active_query'
+                # We start with the user's input as the active query or message
+                initial_state = {
+                    "messages": [HumanMessage(content=user_input)], 
+                    "active_query": user_input,
+                    # Pass history if needed, but graph contextualizes it. 
+                    # Actually, our graph expects 'messages' to be the history + new input.
+                }
+                
+                # Append history to messages
+                # We need to convert history_str or just rely on the new conversational flow?
+                # The graph's 'contextualize' node takes all messages. 
+                # Let's populate 'messages' with recent history + new input.
+                
+                # Fetch recent messages again as objects
+                recent_msgs_objs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-5:]
+                history_messages = []
+                for m in recent_msgs_objs:
+                    if m.role == 'user':
+                        history_messages.append(HumanMessage(content=m.content))
+                    else:
+                        history_messages.append(AIMessage(content=m.content))
+                
+                # Add current input
+                history_messages.append(HumanMessage(content=user_input))
+                
+                response = rag_graph.invoke(
+                    {"messages": history_messages, "active_query": user_input},
+                    config=config
                 )
+                
+                # Extract Final Answer
+                # The last message should be the AI response
+                final_output = response["messages"][-1].content
+                
                 # Put the full result context in queue to be saved later
-                q.put({'type': 'result', 'data': response})
+                q.put({'type': 'result', 'data': {'output': final_output}})
+
+                # Put the full result context in queue to be saved later
+                # q.put({'type': 'result', 'data': response}) 
+
             except Exception as e:
                 import traceback
                 traceback.print_exc()
