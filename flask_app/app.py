@@ -741,7 +741,7 @@ def chat():
     # Setup Queue and Sentinel
     q = queue.Queue()
     job_done = object()
-
+ 
     # Callback Handler
     class QueueCallback(BaseCallbackHandler):
         def on_llm_new_token(self, token: str, **kwargs):
