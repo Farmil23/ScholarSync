@@ -29,11 +29,12 @@ load_dotenv()
 # Prioritize OpenAI for advanced reasoning, fallback to Groq if OpenAI missing but Groq present.
 LLM_MODEL_NAME = "gpt-4o"  # Default
 if os.getenv("OPENAI_API_KEY"):
-    llm = ChatOpenAI(model=LLM_MODEL_NAME, temperature=0)
+    llm = ChatOpenAI(model=LLM_MODEL_NAME, temperature=0, streaming=True)
 elif os.getenv("GROQ_API_KEY"):
     # Fallback to Llama 3 on Groq if OpenAI not available
-    llm = ChatGroq(model_name="llama3-70b-8192", temperature=0)
+    llm = ChatGroq(model_name="llama3-70b-8192", temperature=0, streaming=True)
 else:
+
     # If neither, we might fail or use a dummy.
     # For now assume keys are present as verified.
     raise ValueError("OPENAI_API_KEY or GROQ_API_KEY required for Advanced RAG.")

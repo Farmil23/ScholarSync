@@ -888,6 +888,10 @@ def chat():
             # Post-Streaming: Save AI Message to DB
             # Use final_answer from tool if available, else streamed content
             content_to_save = final_answer if final_answer else full_streamed_content
+
+            # Fallback: If nothing was streamed but we have a final answer, send it now.
+            if not full_streamed_content and content_to_save:
+                 yield f"data: {json.dumps({'token': content_to_save})}\n\n"
             
             if content_to_save:
                 # We need application context if not present, but stream_with_context handles request context? 
@@ -901,6 +905,7 @@ def chat():
                     print(f"DB Save Error: {db_e}")
             
             yield f"data: {json.dumps({'done': True})}\n\n"
+
 
         return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
