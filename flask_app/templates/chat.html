@@ -818,15 +818,50 @@
                                     historyContainer.scrollTop = historyContainer.scrollHeight;
 
                                 } else if (data.status) {
-                                    // Update Thinking / Status
+                                    // Update Thinking / Status (Dropdown Style)
                                     thinkingContainer.classList.remove('hidden');
-                                    // Append or Replace? Let's Replace for cleaner "Step by Step" view
-                                    // Or append with newlines?
-                                    // Let's make it look like a log.
-                                    const logItem = document.createElement('div');
-                                    logItem.className = "text-xs text-slate-500 dark:text-slate-400 mb-1";
-                                    logItem.innerHTML = `<i class="fa-solid fa-gear fa-spin mr-1"></i> ${data.status}`;
-                                    thinkingContent.appendChild(logItem);
+
+                                    // Check if we should append to the LAST detail or start a new one?
+                                    // For simplicity: specific events start new details.
+                                    // We can use the status text to decide.
+
+                                    const details = document.createElement('details');
+                                    details.className = "mb-2 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 open:bg-slate-50 dark:open:bg-slate-900 transition-colors";
+                                    details.open = false; // Closed by default
+
+                                    const summary = document.createElement('summary');
+                                    summary.className = "cursor-pointer p-2 font-medium text-slate-600 dark:text-slate-300 flex items-center select-none hover:text-indigo-600 dark:hover:text-indigo-400";
+
+                                    // Make title prettier by removing specific details if possible, or just use full text
+                                    // Ideally backend sends {title: "...", content: "..."}
+                                    // For now, let's parse simple strings or expect object.
+
+                                    let title = "Reasoning Step";
+                                    let content = "";
+
+                                    if (typeof data.status === 'object') {
+                                        title = data.status.title || title;
+                                        content = data.status.content || JSON.stringify(data.status);
+                                        // Auto-open if it's an error or important
+                                        if (data.status.open) details.open = true;
+                                    } else {
+                                        // String fallback
+                                        title = data.status;
+                                        content = "Process completed.";
+                                    }
+
+                                    summary.innerHTML = `<i class="fa-solid fa-microchip mr-2 text-indigo-500"></i> ${title}`;
+
+                                    const body = document.createElement('div');
+                                    body.className = "p-2 border-t border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono whitespace-pre-wrap max-h-40 overflow-y-auto custom-scrollbar";
+                                    body.textContent = content; // Safe text
+
+                                    details.appendChild(summary);
+                                    details.appendChild(body);
+
+                                    thinkingContent.appendChild(details);
+
+                                    // Auto-scroll to bottom of thinking container
                                     thinkingContainer.scrollTop = thinkingContainer.scrollHeight;
 
                                 } else if (data.error) {

@@ -67,7 +67,7 @@ def get_status_callback(config: RunnableConfig):
 
 def route_query_analysis(state: GraphState, config: RunnableConfig):
     print("--- ROUTE QUERY ---")
-    get_status_callback(config)("Analyzing query intent...")
+    get_status_callback(config)({"title": "Analyzing Query Intent", "content": "Determining best data source..."})
     llm = get_llm(streaming=False) # No Stream
     question = state.get("active_query") or state["messages"][-1].content
     
@@ -82,12 +82,12 @@ def route_query_analysis(state: GraphState, config: RunnableConfig):
         decision = "generate"
         
     print(f"Decision: {decision}")
-    get_status_callback(config)(f"Route selected: {decision}")
+    get_status_callback(config)({"title": "Routing Decision", "content": f"Selected route: {decision.upper()}"})
     return {"query_analysis": decision, "loop_step": 0} # Reset loop step
 
 def contextualize_query(state: GraphState, config: RunnableConfig):
     print("--- CONTEXTUALIZE ---")
-    get_status_callback(config)("Refining question based on history...")
+    get_status_callback(config)({"title": "Contextualizing", "content": "Refining question based on conversation history..."})
     llm = get_llm(streaming=False) # No Stream
     messages = state["messages"]
     if len(messages) <= 1:
@@ -105,17 +105,20 @@ def contextualize_query(state: GraphState, config: RunnableConfig):
 
 def retrieve(state: GraphState, config: RunnableConfig):
     print("--- RETRIEVE ---")
-    get_status_callback(config)("Retrieving relevant documents...")
+    get_status_callback(config)({"title": "Retrieving Documents", "content": f"Searching vector database for: '{state['active_query']}'..."})
     query = state["active_query"]
     user_id = config["configurable"].get("user_id")
     retrieval_fn = config["configurable"].get("retrieval_fn")
     docs = retrieval_fn(query) if (user_id and retrieval_fn) else []
-    get_status_callback(config)(f"Found {len(docs)} documents.")
+    
+    # Summarize docs for status
+    summary = "\n".join([f"- {d.metadata.get('source', 'Unknown')}: {d.page_content[:100]}..." for d in docs[:3]])
+    get_status_callback(config)({"title": "Retrieval Results", "content": f"Found {len(docs)} documents.\n\n{summary}"})
     return {"retrieved_docs": docs}
 
 def grader(state: GraphState, config: RunnableConfig):
     print("--- CHECK RELEVANCE ---")
-    get_status_callback(config)("Grading document relevance...")
+    get_status_callback(config)({"title": "Grading Relevance", "content": "Checking if retrieved documents answer the question..."})
     llm = get_llm(streaming=False) # No Stream
     question = state["active_query"]
     docs = state["retrieved_docs"]
@@ -123,11 +126,11 @@ def grader(state: GraphState, config: RunnableConfig):
     
     if loop_step >= 3:
         print("--- LOOP LIMIT REACHED: FORCE GENERATE ---")
-        get_status_callback(config)("Loop limit reached, proceeding to generate.")
+        get_status_callback(config)({"title": "Loop Limit Reached", "content": "Too many retries. Proceeding to generation with best available info.", "open": True})
         return {"grader_result": "yes", "rewrite_query": "no"}
     
     if not docs:
-        get_status_callback(config)("No relevant docs, requesting rewrite.")
+        get_status_callback(config)({"title": "Relevance Check Failed", "content": "No relevant documents found. Requesting query rewrite."})
         return {"grader_result": "no", "rewrite_query": "yes"}
         
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
@@ -141,27 +144,27 @@ def grader(state: GraphState, config: RunnableConfig):
     for d in docs[:3]:
         content = d.page_content if hasattr(d, 'page_content') else str(d)
         if grader_chain.invoke({"question": question, "document": content}).binary_score == "yes":
-             get_status_callback(config)("Documents passed relevance check.")
+             get_status_callback(config)({"title": "Relevance Confirmed", "content": "Documents are relevant. Proceeding to answer."})
              return {"grader_result": "yes", "rewrite_query": "no"}
     
-    get_status_callback(config)("Docs irrelevant, rewriting query...")
+    get_status_callback(config)({"title": "Relevance Check Failed", "content": "Documents deemed irrelevant. Rewriting query..."})
     return {"grader_result": "no", "rewrite_query": "yes"}
 
 def rewrite_query(state: GraphState, config: RunnableConfig):
     print("--- REWRITE QUERY ---")
-    get_status_callback(config)("Rewriting query for better results...")
+    get_status_callback(config)({"title": "Rewriting Query", "content": "Optimizing query for better search results..."})
     llm = get_llm(streaming=False) # No Stream
     question = state["active_query"]
     loop_step = state.get("loop_step", 0)
     
     msg = [HumanMessage(content=f"Rewrite this question to be better for vector search: {question}")]
     response = llm.invoke(msg)
-    get_status_callback(config)(f"New query: {response.content}")
+    get_status_callback(config)({"title": "Query Optimized", "content": f"New Query: {response.content}"})
     return {"active_query": response.content, "loop_step": loop_step + 1}
 
 def web_search(state: GraphState, config: RunnableConfig):
     print("--- WEB SEARCH ---")
-    get_status_callback(config)("Searching the web (Tavily)...")
+    get_status_callback(config)({"title": "Web Search", "content": "Searching Tavily/DDGS for external information..."})
     query = state["active_query"]
     tavily_key = os.getenv("TAVILY_API_KEY")
     docs = []
@@ -184,7 +187,7 @@ def web_search(state: GraphState, config: RunnableConfig):
 
 def generate(state: GraphState, config: RunnableConfig):
     print("--- GENERATE ---")
-    get_status_callback(config)("Generating final answer...")
+    get_status_callback(config)({"title": "Generating Answer", "content": "Compiling final response..."})
     # ONLY THIS NODE USES STREAMING LLM
     llm = get_llm(streaming=True) 
     question = state["active_query"]
@@ -196,8 +199,24 @@ def generate(state: GraphState, config: RunnableConfig):
         ("human", "Context:\n{context}\n\nQuestion: {question}"),
     ])
     
-    # We pass 'config' here so the QueueCallback gets attached to THIS chain only
-    response = (prompt | llm).invoke({"context": context, "question": question}, config=config)
+    # --- Manual Streaming Setup ---
+    from langchain_core.callbacks import BaseCallbackHandler
+    
+    class ManualTokenCallback(BaseCallbackHandler):
+        def __init__(self, callback_fn):
+            self.cb_fn = callback_fn
+        def on_llm_new_token(self, token: str, **kwargs):
+            if self.cb_fn: 
+                self.cb_fn(token)
+                
+    token_fn = config.get("configurable", {}).get("token_callback")
+    callbacks = [ManualTokenCallback(token_fn)] if token_fn else []
+    
+    response = (prompt | llm).invoke(
+        {"context": context, "question": question}, 
+        config={"callbacks": callbacks} # Override callbacks
+    )
+    
     return {"messages": [response]}
 
 

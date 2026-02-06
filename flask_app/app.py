@@ -814,15 +814,21 @@ def chat():
                 # Callback to queue status updates
                 def status_update(msg):
                     q.put({'type': 'status', 'data': msg})
+                
+                # Callback for tokens (Manual propagation)
+                def token_stream(token):
+                    q.put(token)
 
                 # Prepare Config
                 config = {
                     "configurable": {
                         "user_id": str(current_user.id), 
                         "retrieval_fn": retrieval_fn,
-                        "status_callback": status_update
+                        "status_callback": status_update,
+                        "token_callback": token_stream
                     }, 
-                    "callbacks": [QueueCallback()]
+                    # We still pass standard callbacks just in case, but rely on configurable for custom graph nodes
+                    "callbacks": [QueueCallback()] 
                 }
                 
                 # History Preparation
