@@ -795,10 +795,10 @@ def chat():
             doc_names = [d.filename for d in user_docs]
             print(f"🔓 No session docs linked. Fallback to all {len(doc_names)} user docs.")
         
-        executor = get_agent_executor(current_user.id, doc_names=doc_names)
+        from rag_graph import get_rag_graph
+        executor = get_rag_graph()
         
         # 5. Run Agent (Threaded with Keep-Alive for Vercel)
-        from rag_graph import get_rag_graph
         
         # Define retrieval function dynamically for the user
         def retrieval_fn(query):
