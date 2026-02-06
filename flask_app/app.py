@@ -738,7 +738,6 @@ def get_session_documents(session_id):
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    print("DEBUG: /chat endpoint hit! (Version 2.5)")
     # Setup Queue and Sentinel
     q = queue.Queue()
     job_done = object()
