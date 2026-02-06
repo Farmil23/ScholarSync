@@ -236,7 +236,7 @@ def web_search(state: GraphState):
     return {"retrieved_docs": processed_docs}
 
 # --- 7. Generate ---
-def generate(state: GraphState):
+def generate(state: GraphState, config: RunnableConfig):
     print("--- GENERATE ---")
     question = state["active_query"]
     docs = state.get("retrieved_docs", [])
@@ -250,7 +250,7 @@ def generate(state: GraphState):
     ])
     
     chain = prompt | llm
-    response = chain.invoke({"context": context, "question": question})
+    response = chain.invoke({"context": context, "question": question}, config=config)
     
     return {"messages": [response]}
 
