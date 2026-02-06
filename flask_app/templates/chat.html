@@ -812,41 +812,22 @@
 
                                 if (data.token) {
                                     const token = data.token;
+                                    // Direct to answer
+                                    currentAnswerText += token;
+                                    bubble.innerHTML = marked.parse(currentAnswerText);
+                                    historyContainer.scrollTop = historyContainer.scrollHeight;
 
-                                    if (isThinking) {
-                                        currentThinkingText += token;
-
-                                        // Update UI
-                                        thinkingContainer.classList.remove('hidden');
-                                        thinkingContent.textContent = currentThinkingText; // Raw text for thoughts
-
-                                        // Check for "Final Answer:"
-                                        // We look for the pattern. Case insensitive? Usually it's "Final Answer:" capitalized by LangChain.
-                                        const terminator = "Final Answer:";
-                                        const index = currentThinkingText.indexOf(terminator);
-
-                                        if (index !== -1) {
-                                            isThinking = false;
-
-                                            // Split!
-                                            // Everything BEFORE terminator stays in thinking
-                                            const realThinking = currentThinkingText.substring(0, index).trim();
-                                            thinkingContent.textContent = realThinking;
-
-                                            // Everything AFTER terminator goes to answer
-                                            // Remove the terminator itself
-                                            const remaining = currentThinkingText.substring(index + terminator.length);
-                                            currentAnswerText += remaining;
-
-                                            // Update main bubble
-                                            bubble.innerHTML = marked.parse(currentAnswerText);
-                                        }
-                                    } else {
-                                        // Direct to answer
-                                        currentAnswerText += token;
-                                        bubble.innerHTML = marked.parse(currentAnswerText);
-                                        historyContainer.scrollTop = historyContainer.scrollHeight;
-                                    }
+                                } else if (data.status) {
+                                    // Update Thinking / Status
+                                    thinkingContainer.classList.remove('hidden');
+                                    // Append or Replace? Let's Replace for cleaner "Step by Step" view
+                                    // Or append with newlines?
+                                    // Let's make it look like a log.
+                                    const logItem = document.createElement('div');
+                                    logItem.className = "text-xs text-slate-500 dark:text-slate-400 mb-1";
+                                    logItem.innerHTML = `<i class="fa-solid fa-gear fa-spin mr-1"></i> ${data.status}`;
+                                    thinkingContent.appendChild(logItem);
+                                    thinkingContainer.scrollTop = thinkingContainer.scrollHeight;
 
                                 } else if (data.error) {
                                     bubble.innerHTML += `\n\n*Error: ${data.error}*`;

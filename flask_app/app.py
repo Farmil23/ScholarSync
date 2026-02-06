@@ -808,12 +808,20 @@ def chat():
         def task():
             print("DEBUG: Starting Agent Task...")
             try:
-                # Lazy Load Graph - This traps "Missing Key" errors here in the thread!
+                # Lazy Load Graph
                 rag_graph = get_rag_graph() 
- 
+                
+                # Callback to queue status updates
+                def status_update(msg):
+                    q.put({'type': 'status', 'data': msg})
+
                 # Prepare Config
                 config = {
-                    "configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, 
+                    "configurable": {
+                        "user_id": str(current_user.id), 
+                        "retrieval_fn": retrieval_fn,
+                        "status_callback": status_update
+                    }, 
                     "callbacks": [QueueCallback()]
                 }
                 
@@ -869,6 +877,9 @@ def chat():
                 if isinstance(item, dict):
                     if item.get('type') == 'result':
                         final_answer = item['data'].get('output', '')
+                    elif item.get('type') == 'status':
+                        # Stream Status Update
+                        yield f"data: {json.dumps({'status': item['data']})}\n\n"
                     elif item.get('type') == 'error':
                         yield f"data: {json.dumps({'error': item['data']})}\n\n"
                         final_answer = f"Error: {item['data']}"
@@ -881,6 +892,7 @@ def chat():
             # Save Logic
             content_to_save = final_answer if final_answer else full_streamed_content
             if content_to_save:
+                # ... (Save logic mostly same) ...
                 try:
                     ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=content_to_save, citations=json.dumps([]))
                     db.session.add(ai_msg_db)
