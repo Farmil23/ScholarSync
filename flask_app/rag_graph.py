@@ -3,21 +3,24 @@ from typing import Annotated, Literal, TypedDict, List
 from dotenv import load_dotenv
 
 # LangChain / LangGraph Imports
+# LangChain / LangGraph Imports
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, AnyMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_groq import ChatGroq
-from langchain_community.vectorstores import FAISS
-from langchain_community.docstore.in_memory import InMemoryDocstore
-from langchain_community.tools.tavily_search import TavilySearchResults
+
+# from langchain_community.vectorstores import FAISS # REMOVED: Too heavy
+# from langchain_community.docstore.in_memory import InMemoryDocstore # REMOVED
+# from langchain_community.tools.tavily_search import TavilySearchResults # REMOVED: Too heavy dependency
 from langchain_core.tools import Tool
 
 from langgraph.graph import StateGraph, END, START
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
-import faiss
+# import faiss # REMOVED: Too heavy
+
 
 # Load Env
 load_dotenv()
@@ -202,21 +205,32 @@ def web_search(state: GraphState):
     print("--- WEB SEARCH ---")
     query = state["active_query"]
     
-    # Use Tavily if key present, else DDGS
     docs = []
-    if os.getenv("TAVILY_API_KEY"):
-        tavily = TavilySearchResults(k=3)
-        docs = tavily.invoke(query)
-        # Tavily returns list of dicts, format to be compatible with Docs
-        # We'll just append text content
-        formatted = [f"Source: {d['url']}\nContent: {d['content']}" for d in docs]
-        processed_docs = formatted
+    tavily_key = os.getenv("TAVILY_API_KEY")
+    
+    if tavily_key:
+        try:
+            # Lightweight Tavily Client (No LangChain Community needed)
+            import requests
+            response = requests.post(
+                "https://api.tavily.com/search",
+                json={"query": query, "api_key": tavily_key, "max_results": 3}
+            )
+            results = response.json().get("results", [])
+            formatted = [f"Source: {d['url']}\nContent: {d['content']}" for d in results]
+            processed_docs = formatted
+        except Exception as e:
+            print(f"Tavily Error: {e}")
+            processed_docs = []
     else:
         # Fallback DDGS
-        from ddgs import DDGS
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=3))
-            processed_docs = [f"Source: {r['href']}\nContent: {r['body']}" for r in results]
+        try:
+            from ddgs import DDGS
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=3))
+                processed_docs = [f"Source: {r['href']}\nContent: {r['body']}" for r in results]
+        except ImportError:
+             processed_docs = ["Web search unavailable (ddgs module missing)."]
             
     return {"retrieved_docs": processed_docs}
 

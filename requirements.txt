@@ -35,4 +35,5 @@ gTTS>=2.5.1
 langgraph
 langsmith
 langchain-groq
-faiss-cpu
+# faiss-cpu # REMOVED: Too large for Vercel (250MB limit)
+
