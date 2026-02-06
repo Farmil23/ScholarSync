@@ -785,7 +785,7 @@
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let isThinking = true; // Start in thinking mode (ReAct pattern)
+                let isThinking = false; // Changed to false for RAG Graph (Direct Answer)
                 let currentThinkingText = "";
                 let currentAnswerText = "";
 
