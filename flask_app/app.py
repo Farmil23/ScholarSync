@@ -798,7 +798,7 @@ def chat():
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
         # 5. Run Agent (Threaded with Keep-Alive for Vercel)
-        from rag_graph import rag_graph
+        from rag_graph import get_rag_graph
         
         # Define retrieval function dynamically for the user
         def retrieval_fn(query):
@@ -808,6 +808,9 @@ def chat():
         def task():
             print("DEBUG: Starting Agent Task...")
             try:
+                # Lazy Load Graph - This traps "Missing Key" errors here in the thread!
+                rag_graph = get_rag_graph() 
+
                 # Prepare Config
                 config = {
                     "configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, 
@@ -1299,6 +1302,18 @@ def get_audio_summary(session_id):
     except Exception as e:
         print(f"TTS Error: {e}")
         return str(e), 500
+
+@app.route('/debug/config')
+@login_required
+def debug_config():
+    import os
+    keys = {
+        "OPENAI_API_KEY": "PRESENT" if os.getenv("OPENAI_API_KEY") else "MISSING",
+        "GROQ_API_KEY": "PRESENT" if os.getenv("GROQ_API_KEY") else "MISSING",
+        "ASTRA_TOKEN": "PRESENT" if os.getenv("ASTRA_DB_APPLICATION_TOKEN") else "MISSING",
+        "DATABASE_URL": "PRESENT" if os.getenv("CONNECTION_STRING") else "MISSING"
+    }
+    return jsonify(keys)
 
 if __name__ == '__main__':
     with app.app_context():

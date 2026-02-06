@@ -27,38 +27,35 @@ load_dotenv()
 
 # --- Configuration ---
 # Prioritize OpenAI for advanced reasoning, fallback to Groq if OpenAI missing but Groq present.
-LLM_MODEL_NAME = "gpt-4o"  # Default
-if os.getenv("OPENAI_API_KEY"):
-    llm = ChatOpenAI(model=LLM_MODEL_NAME, temperature=0, streaming=True)
-elif os.getenv("GROQ_API_KEY"):
-    # Fallback to Llama 3 on Groq if OpenAI not available
-    llm = ChatGroq(model_name="llama3-70b-8192", temperature=0, streaming=True)
-else:
+# Global variable for cached graph
+_cached_graph = None
+_cached_llm = None
 
-    # If neither, we might fail or use a dummy.
-    # For now assume keys are present as verified.
-    raise ValueError("OPENAI_API_KEY or GROQ_API_KEY required for Advanced RAG.")
+def get_llm():
+    global _cached_llm
+    if _cached_llm:
+        return _cached_llm
+        
+    # Prioritize OpenAI for advanced reasoning, fallback to Groq if OpenAI missing but Groq present.
+    # Check keys lazily
+    openai_key = os.getenv("OPENAI_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
+    
+    if openai_key:
+        llm = ChatOpenAI(model="gpt-4o", temperature=0, streaming=True)
+    elif groq_key:
+        llm = ChatGroq(model_name="llama3-70b-8192", temperature=0, streaming=True)
+    else:
+        raise ValueError("Configuration Error: OPENAI_API_KEY or GROQ_API_KEY is missing in environment variables.")
+        
+    _cached_llm = llm
+    return llm
 
-# --- State Definition ---
-class GraphState(TypedDict):
-    messages: Annotated[list[AnyMessage], add_messages]
-    query_analysis: Literal["generate", "web_search", "retrieve"]
-    retrieved_docs: List[any] # Stores Document objects
-    grader_result: str
-    rewrite_query: str
-    active_query: str
-    cache_hit: bool
-
-# --- 1. Query Analysis / Routing ---
-class RouteQuery(BaseModel):
-    """Route a user query to the most relevant datasource."""
-    datasource: Literal["generate", "web_search", "retrieve"] = Field(
-        ...,
-        description="Given a user question choose to route it to web search, vectorstore retrieval, or general generation."
-    )
+# --- Node Functions (Now call get_llm()) ---
 
 def route_query_analysis(state: GraphState):
     print("--- ROUTE QUERY ---")
+    llm = get_llm()
     question = state.get("active_query") or state["messages"][-1].content
     
     # Simple structured router
@@ -85,9 +82,9 @@ def route_query_analysis(state: GraphState):
     print(f"Decision: {decision}")
     return {"query_analysis": decision}
 
-# --- 2. Contextualize (History Awareness) ---
 def contextualize_query(state: GraphState):
     print("--- CONTEXTUALIZE ---")
+    llm = get_llm()
     messages = state["messages"]
     if len(messages) <= 1:
          return {"active_query": messages[-1].content}
@@ -110,29 +107,15 @@ def contextualize_query(state: GraphState):
     print(f"Refined Query: {refined}")
     return {"active_query": refined}
 
-# --- 3. Retrieval ---
-# We need a way to pass the retriever. Since the graph is compiled once, 
-# but user retrievers are dynamic (based on user_id), we might need to inject it 
-# or use a global lookup if possible. 
-# BEST PRACTICE for Multi-Tenant: Pass the retriever or vectorstore in the `config` 
-# or construct it dynamically inside the node using user_id from config.
-
 def retrieve(state: GraphState, config: RunnableConfig):
     print("--- RETRIEVE ---")
     query = state["active_query"]
     
     # Dynamic Retrieval Logic
-    # We expect 'retriever' to be passed in config['configurable'] or we rebuild it here.
-    # Rebuilding is safer for strict isolation.
     user_id = config["configurable"].get("user_id")
     if not user_id:
-        # Fallback empty
         return {"retrieved_docs": []}
 
-    # Imports from app logic (avoid circular import if possible, or repeat logic)
-    # We will repeat logic slightly or import helper if moved to common.
-    # For now, let's assume we can get retrieval function from utils or pass it.
-    # Let's try to grab the function from `context` or `configurable`.
     retrieval_fn = config["configurable"].get("retrieval_fn")
     
     docs = []
@@ -141,13 +124,9 @@ def retrieve(state: GraphState, config: RunnableConfig):
     
     return {"retrieved_docs": docs}
 
-# --- 4. Grader (Self-Correction) ---
-class GradeDocuments(BaseModel):
-    """Binary score for relevance check."""
-    binary_score: str = Field(description="Documents are relevant to the question, 'yes' or 'no'")
-
 def grader(state: GraphState):
     print("--- CHECK RELEVANCE ---")
+    llm = get_llm()
     question = state["active_query"]
     docs = state["retrieved_docs"]
     
@@ -166,9 +145,6 @@ def grader(state: GraphState):
     
     grader_chain = grade_prompt | structured_llm_grader
     
-    # We grade essentially if ANY doc is relevant or if the SET is relevant.
-    # Simplification: Concatenate key parts or grade top 1. 
-    # Let's grade the first few.
     relevant_found = False
     filtered_docs = []
     
@@ -185,9 +161,9 @@ def grader(state: GraphState):
     
     return {"grader_result": "no", "rewrite_query": "yes"}
 
-# --- 5. Query Rewrite ---
 def rewrite_query(state: GraphState):
     print("--- REWRITE QUERY ---")
+    llm = get_llm()
     question = state["active_query"]
     
     msg = [
@@ -201,7 +177,6 @@ def rewrite_query(state: GraphState):
     response = model.invoke(msg)
     return {"active_query": response.content}
 
-# --- 6. Web Search ---
 def web_search(state: GraphState):
     print("--- WEB SEARCH ---")
     query = state["active_query"]
@@ -235,9 +210,9 @@ def web_search(state: GraphState):
             
     return {"retrieved_docs": processed_docs}
 
-# --- 7. Generate ---
 def generate(state: GraphState, config: RunnableConfig):
     print("--- GENERATE ---")
+    llm = get_llm()
     question = state["active_query"]
     docs = state.get("retrieved_docs", [])
     
@@ -255,52 +230,62 @@ def generate(state: GraphState, config: RunnableConfig):
     return {"messages": [response]}
 
 
-# --- Graph Construction ---
-workflow = StateGraph(GraphState)
+def get_rag_graph():
+    global _cached_graph
+    if _cached_graph:
+        return _cached_graph
+        
+    # Ensure LLM is ready (will raise error if keys missing)
+    get_llm()
+    
+    # Graph Construction
+    workflow = StateGraph(GraphState)
+    
+    # Nodes
+    workflow.add_node("contextualize", contextualize_query)
+    workflow.add_node("query_analysis", route_query_analysis)
+    workflow.add_node("retrieve", retrieve)
+    workflow.add_node("web_search", web_search)
+    workflow.add_node("grader", grader)
+    workflow.add_node("rewrite_query", rewrite_query)
+    workflow.add_node("generate", generate)
+    
+    # Edges
+    workflow.add_edge(START, "contextualize")
+    workflow.add_edge("contextualize", "query_analysis")
+    
+    def route_decision(state):
+        return state["query_analysis"]
+    
+    workflow.add_conditional_edges(
+        "query_analysis",
+        route_decision,
+        {
+            "web_search": "web_search",
+            "retrieve": "retrieve",
+            "generate": "generate"
+        }
+    )
+    
+    workflow.add_edge("web_search", "generate")
+    workflow.add_edge("retrieve", "grader")
+    
+    def grader_decision(state):
+        return state["rewrite_query"]
+    
+    workflow.add_conditional_edges(
+        "grader",
+        lambda x: "rewrite" if x["rewrite_query"] == "yes" else "generate",
+        {
+            "rewrite": "rewrite_query",
+            "generate": "generate"
+        }
+    )
+    
+    workflow.add_edge("rewrite_query", "retrieve") 
+    workflow.add_edge("generate", END)
+    
+    # Compile
+    _cached_graph = workflow.compile()
+    return _cached_graph
 
-# Nodes
-workflow.add_node("contextualize", contextualize_query)
-workflow.add_node("query_analysis", route_query_analysis)
-workflow.add_node("retrieve", retrieve)
-workflow.add_node("web_search", web_search)
-workflow.add_node("grader", grader)
-workflow.add_node("rewrite_query", rewrite_query)
-workflow.add_node("generate", generate)
-
-# Edges
-workflow.add_edge(START, "contextualize")
-workflow.add_edge("contextualize", "query_analysis")
-
-def route_decision(state):
-    return state["query_analysis"]
-
-workflow.add_conditional_edges(
-    "query_analysis",
-    route_decision,
-    {
-        "web_search": "web_search",
-        "retrieve": "retrieve",
-        "generate": "generate"
-    }
-)
-
-workflow.add_edge("web_search", "generate")
-workflow.add_edge("retrieve", "grader")
-
-def grader_decision(state):
-    return state["rewrite_query"]
-
-workflow.add_conditional_edges(
-    "grader",
-    lambda x: "rewrite" if x["rewrite_query"] == "yes" else "generate",
-    {
-        "rewrite": "rewrite_query",
-        "generate": "generate"
-    }
-)
-
-workflow.add_edge("rewrite_query", "retrieve") # Loop back to retrieve with better query
-workflow.add_edge("generate", END)
-
-# Compile
-rag_graph = workflow.compile()
