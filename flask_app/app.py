@@ -745,7 +745,13 @@ def chat():
     # Callback Handler
     class QueueCallback(BaseCallbackHandler):
         def on_llm_new_token(self, token: str, **kwargs):
+            # print(f"DEBUG: Token received: {token}") # Comment out for production
             q.put(token)
+        def on_llm_end(self, *args, **kwargs):
+            print("DEBUG: LLM Generation End")
+        def on_llm_error(self, error, **kwargs):
+            print(f"DEBUG: LLM Error: {error}")
+
 
     try:
         data = request.json
@@ -805,11 +811,14 @@ def chat():
             return docs
 
         def task():
+            print("DEBUG: Starting Agent Task...")
             try:
                 # Prepare Config with user-specific retrieval
                 config = {"configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, "callbacks": [QueueCallback()]}
                 
                 # Invoke Graph
+                print("DEBUG: Invoking RAG Graph...")
+                
                 # The graph state expects 'messages' or 'active_query'
                 # We start with the user's input as the active query or message
                 initial_state = {
@@ -840,10 +849,12 @@ def chat():
                     {"messages": history_messages, "active_query": user_input},
                     config=config
                 )
+                print("DEBUG: RAG Graph Finished.")
                 
                 # Extract Final Answer
                 # The last message should be the AI response
                 final_output = response["messages"][-1].content
+                print(f"DEBUG: Final Output Length: {len(final_output)}")
                 
                 # Put the full result context in queue to be saved later
                 q.put({'type': 'result', 'data': {'output': final_output}})
@@ -854,8 +865,10 @@ def chat():
             except Exception as e:
                 import traceback
                 traceback.print_exc()
+                print(f"DEBUG: Task Exception: {e}")
                 q.put({'type': 'error', 'data': str(e)})
             finally:
+                print("DEBUG: Task Done, sending sentinel.")
                 q.put(job_done)
 
         t = threading.Thread(target=task)
@@ -866,21 +879,32 @@ def chat():
             full_streamed_content = "" # For tracking what was sent (optional)
             final_answer = "" # To be saved in DB
             
+            # FORCE VERCEL/NGINX TO START STREAMING IMMEDIATELY
+            # Yield a comment or empty event to flush headers
+            yield ": ping\n\n"
+            
+            print("DEBUG: Starting Generator Loop")
+            
             while True:
                 item = q.get()
                 if item is job_done:
+                    print("DEBUG: Generator received Job Done")
                     break
+
                 
                 if isinstance(item, dict):
                     if item.get('type') == 'result':
+                        print("DEBUG: Generator received Result")
                         # Valid Result -> Extract output for DB
                         final_answer = item['data'].get('output', '')
                     elif item.get('type') == 'error':
+                        print("DEBUG: Generator received Error")
                         # Send error to frontend
                         yield f"data: {json.dumps({'error': item['data']})}\n\n"
                         final_answer = f"Error: {item['data']}"
                 else:
                     # Token
+                    # print(f"DEBUG: Yielding token: {item}")
                     token = item
                     full_streamed_content += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
@@ -907,7 +931,10 @@ def chat():
             yield f"data: {json.dumps({'done': True})}\n\n"
 
 
-        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+        r = Response(stream_with_context(generate()), mimetype='text/event-stream')
+        r.headers['X-Accel-Buffering'] = 'no' # Disable buffering for Nginx/Vercel
+        return r
+
 
     except Exception as ie:
         import traceback
