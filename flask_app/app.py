@@ -810,7 +810,7 @@ def chat():
             try:
                 # Lazy Load Graph - This traps "Missing Key" errors here in the thread!
                 rag_graph = get_rag_graph() 
-
+ 
                 # Prepare Config
                 config = {
                     "configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, 
