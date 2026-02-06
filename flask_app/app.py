@@ -797,143 +797,66 @@ def chat():
         
         executor = get_agent_executor(current_user.id, doc_names=doc_names)
         
-        # 5. Run Agent in Thread (Using RAG Graph)
+        # 5. Run Agent (Synchronous - Reliable Fallback for Vercel)
         from rag_graph import rag_graph
         
         # Define retrieval function dynamically for the user
         def retrieval_fn(query):
-            # Re-use the existing AstraDB setup logic or similar
-            # Since we can't easily pass the entire retriever object to a compiled graph if it wasn't built in,
-            # we pass the function via config.
             retriever = get_astradb_retriever(current_user.id)
-            # Invoke retriever
-            docs = retriever.invoke(query)
-            return docs
+            return retriever.invoke(query)
 
-        def task():
-            print("DEBUG: Starting Agent Task...")
+        # Config Setup
+        config = {"configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}}
+
+        # History Preparation
+        recent_msgs_objs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-5:]
+        history_messages = []
+        for m in recent_msgs_objs:
+            if m.role == 'user':
+                history_messages.append(HumanMessage(content=m.content))
+            else:
+                history_messages.append(AIMessage(content=m.content))
+        history_messages.append(HumanMessage(content=user_input))
+
+        # Generator Function (Synchronous Execution inside generator)
+        def generate():
+            # Ping immediately
+            yield ": ping\n\n"
+            
             try:
-                # Prepare Config with user-specific retrieval
-                config = {"configurable": {"user_id": str(current_user.id), "retrieval_fn": retrieval_fn}, "callbacks": [QueueCallback()]}
-                
-                # Invoke Graph
-                print("DEBUG: Invoking RAG Graph...")
-                
-                # The graph state expects 'messages' or 'active_query'
-                # We start with the user's input as the active query or message
-                initial_state = {
-                    "messages": [HumanMessage(content=user_input)], 
-                    "active_query": user_input,
-                    # Pass history if needed, but graph contextualizes it. 
-                    # Actually, our graph expects 'messages' to be the history + new input.
-                }
-                
-                # Append history to messages
-                # We need to convert history_str or just rely on the new conversational flow?
-                # The graph's 'contextualize' node takes all messages. 
-                # Let's populate 'messages' with recent history + new input.
-                
-                # Fetch recent messages again as objects
-                recent_msgs_objs = ChatMessage.query.filter_by(session_id=chat_session.id).order_by(ChatMessage.created_at.asc()).all()[-5:]
-                history_messages = []
-                for m in recent_msgs_objs:
-                    if m.role == 'user':
-                        history_messages.append(HumanMessage(content=m.content))
-                    else:
-                        history_messages.append(AIMessage(content=m.content))
-                
-                # Add current input
-                history_messages.append(HumanMessage(content=user_input))
-                
+                # Invoke Graph Synchronously (Blocking)
+                print("DEBUG: Synchronous Invoke Start")
                 response = rag_graph.invoke(
                     {"messages": history_messages, "active_query": user_input},
                     config=config
                 )
-                print("DEBUG: RAG Graph Finished.")
+                print("DEBUG: Synchronous Invoke End")
                 
-                # Extract Final Answer
-                # The last message should be the AI response
                 final_output = response["messages"][-1].content
-                print(f"DEBUG: Final Output Length: {len(final_output)}")
                 
-                # Put the full result context in queue to be saved later
-                q.put({'type': 'result', 'data': {'output': final_output}})
+                # Save to DB
+                # Note: We are inside a generator, so we need app context if not present (but stream_with_context handles it)
+                ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=final_output, citations=json.dumps([]))
+                db.session.add(ai_msg_db)
+                db.session.commit()
+                log_activity(current_user.id, 'chat')
 
-                # Put the full result context in queue to be saved later
-                # q.put({'type': 'result', 'data': response}) 
-
+                # Yield the full result as a token
+                # We can split it into chunks to simulate streaming if we want, or just send it all.
+                # Sending all at once is safer.
+                yield f"data: {json.dumps({'token': final_output})}\n\n"
+                yield f"data: {json.dumps({'done': True})}\n\n"
+                
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print(f"DEBUG: Task Exception: {e}")
-                q.put({'type': 'error', 'data': str(e)})
-            finally:
-                print("DEBUG: Task Done, sending sentinel.")
-                q.put(job_done)
-
-        t = threading.Thread(target=task)
-        t.start()
+                print(f"DEBUG: Sync Error: {e}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
         
-        # 6. Stream Generator
-        def generate():
-            full_streamed_content = "" # For tracking what was sent (optional)
-            final_answer = "" # To be saved in DB
-            
-            # FORCE VERCEL/NGINX TO START STREAMING IMMEDIATELY
-            # Yield a comment or empty event to flush headers
-            yield ": ping\n\n"
-            
-            print("DEBUG: Starting Generator Loop")
-            
-            while True:
-                item = q.get()
-                if item is job_done:
-                    print("DEBUG: Generator received Job Done")
-                    break
-
-                
-                if isinstance(item, dict):
-                    if item.get('type') == 'result':
-                        print("DEBUG: Generator received Result")
-                        # Valid Result -> Extract output for DB
-                        final_answer = item['data'].get('output', '')
-                    elif item.get('type') == 'error':
-                        print("DEBUG: Generator received Error")
-                        # Send error to frontend
-                        yield f"data: {json.dumps({'error': item['data']})}\n\n"
-                        final_answer = f"Error: {item['data']}"
-                else:
-                    # Token
-                    # print(f"DEBUG: Yielding token: {item}")
-                    token = item
-                    full_streamed_content += token
-                    yield f"data: {json.dumps({'token': token})}\n\n"
-            
-            # Post-Streaming: Save AI Message to DB
-            # Use final_answer from tool if available, else streamed content
-            content_to_save = final_answer if final_answer else full_streamed_content
-
-            # Fallback: If nothing was streamed but we have a final answer, send it now.
-            if not full_streamed_content and content_to_save:
-                 yield f"data: {json.dumps({'token': content_to_save})}\n\n"
-            
-            if content_to_save:
-                # We need application context if not present, but stream_with_context handles request context? 
-                # Actually, stream_with_context keeps the request context active.
-                try:
-                    ai_msg_db = ChatMessage(session_id=chat_session.id, role='ai', content=content_to_save, citations=json.dumps([]))
-                    db.session.add(ai_msg_db)
-                    db.session.commit()
-                    log_activity(current_user.id, 'chat')
-                except Exception as db_e:
-                    print(f"DB Save Error: {db_e}")
-            
-            yield f"data: {json.dumps({'done': True})}\n\n"
-
-
         r = Response(stream_with_context(generate()), mimetype='text/event-stream')
-        r.headers['X-Accel-Buffering'] = 'no' # Disable buffering for Nginx/Vercel
+        r.headers['X-Accel-Buffering'] = 'no'
         return r
+
 
 
     except Exception as ie:
